@@ -21,6 +21,9 @@ model User {
   policies          Policy[]
   workerStates      WorkerState[]
   claims            Claim[]
+  forcedOrdersPerHour Float?
+  forcedMotion        String?
+  forcedGpsPattern    String?
 }
 
 model Policy {

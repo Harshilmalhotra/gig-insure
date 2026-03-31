@@ -37,15 +37,27 @@ export class InsuranceService {
   }
 
   async processWorkerHeartbeat(userId: string, telemetry: { ordersPerHour: number; motion: string; gpsPattern: string; earnings: number }) {
-    // 1. Store state
+    // 1. Check for simulation overrides
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    const effectiveTelemetry = {
+      ordersPerHour: user?.forcedOrdersPerHour !== null ? user?.forcedOrdersPerHour : telemetry.ordersPerHour,
+      motion: user?.forcedMotion !== null ? user?.forcedMotion : telemetry.motion,
+      gpsPattern: user?.forcedGpsPattern !== null ? user?.forcedGpsPattern : telemetry.gpsPattern,
+      earnings: telemetry.earnings,
+    };
+
+    // 2. Store state
     await this.prisma.workerState.create({
       data: {
         userId,
-        ...telemetry,
+        ordersPerHour: effectiveTelemetry.ordersPerHour ?? 0,
+        motion: effectiveTelemetry.motion ?? 'idle',
+        gpsPattern: effectiveTelemetry.gpsPattern ?? 'smooth',
+        earnings: effectiveTelemetry.earnings ?? 0,
       },
     });
 
-    // 2. Check for triggers
+    // 3. Check for triggers
     const activePolicy = await this.prisma.policy.findFirst({
       where: { userId, status: 'ACTIVE', endDate: { gt: new Date() } },
     });
@@ -56,19 +68,16 @@ export class InsuranceService {
 
       if (weatherData.rain > 30) trigger = 'RAIN';
       else if (weatherData.temp > 43) trigger = 'HEAT';
-      else if (telemetry.ordersPerHour < 0.5) trigger = 'DEMAND_CRASH';
+      else if ((effectiveTelemetry.ordersPerHour ?? 0) < 0.5) trigger = 'DEMAND_CRASH';
 
       if (trigger) {
-        // Need to create a claim if not already existing for this policy/trigger session
-        // Simple logic: create if recent claim doesn't exist
         const recentClaim = await this.prisma.claim.findFirst({
           where: { userId, policyId: activePolicy.id, triggerType: trigger, createdAt: { gt: new Date(Date.now() - 3600000) } },
         });
 
         if (!recentClaim) {
-          // Calculate activity & fraud scores
-          const activityScore = telemetry.motion === 'moving' ? 0.9 : 0.3;
-          const fraudScore = telemetry.gpsPattern === 'anomaly' ? 1.0 : 0.1;
+          const activityScore = effectiveTelemetry.motion === 'moving' ? 0.9 : 0.3;
+          const fraudScore = effectiveTelemetry.gpsPattern === 'anomaly' ? 1.0 : 0.1;
 
           await this.prisma.claim.create({
             data: {
