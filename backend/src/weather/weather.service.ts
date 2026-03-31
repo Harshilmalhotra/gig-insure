@@ -9,17 +9,42 @@ export class WeatherService {
   constructor(private prisma: PrismaService) {}
 
   async getCurrentWeather(lat: number = 19.076, lon: number = 72.877) {
-    // Check if there is a simulated environment state
-    const latestSim = await this.prisma.environmentState.findFirst({
-      where: { isSimulated: true },
+    // Check for the most recent environment setting
+    const latestState = await this.prisma.environmentState.findFirst({
       orderBy: { timestamp: 'desc' },
     });
 
-    if (latestSim) {
+    // If the latest state is specifically marked as NOT simulated, try real API
+    if (latestState && !latestState.isSimulated) {
+      try {
+        const response = await axios.get(
+          `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${this.apiKey}&units=metric`,
+        );
+        const data = response.data;
+        return {
+          rain: data.rain ? data.rain['1h'] || 0 : 0,
+          temp: data.main.temp,
+          aqi: 50,
+          isSimulated: false,
+        };
+      } catch (e) {
+        // Fallback to the last saved weather if API fails
+        return {
+          rain: latestState.rain,
+          temp: latestState.temperature,
+          aqi: latestState.aqi,
+          isSimulated: true,
+          error: 'API_FAILED_FALLBACK',
+        };
+      }
+    }
+
+    // Default to the latest simulated state if it exists
+    if (latestState) {
       return {
-        rain: latestSim.rain,
-        temp: latestSim.temperature,
-        aqi: latestSim.aqi,
+        rain: latestState.rain,
+        temp: latestState.temperature,
+        aqi: latestState.aqi,
         isSimulated: true,
       };
     }
