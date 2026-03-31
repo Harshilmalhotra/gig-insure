@@ -1,0 +1,73 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id                String        @id @default(uuid())
+  email             String        @unique
+  name              String
+  platform          String        // Swiggy, Zomato
+  baseEarnings      Float         @default(0)
+  baseRating        Float         @default(0)
+  consistencyScore  Float         @default(0)
+  createdAt         DateTime      @default(now())
+  policies          Policy[]
+  workerStates      WorkerState[]
+  claims            Claim[]
+}
+
+model Policy {
+  id                String    @id @default(uuid())
+  user              User      @relation(fields: [userId], references: [id])
+  userId            String
+  coverage          Float
+  premium           Float
+  startDate         DateTime  @default(now())
+  endDate           DateTime
+  status            String    @default("ACTIVE") // ACTIVE, EXPIRED, CANCELLED
+  claims            Claim[]
+}
+
+model WorkerState {
+  id                String    @id @default(uuid())
+  user              User      @relation(fields: [userId], references: [id])
+  userId            String
+  timestamp         DateTime  @default(now())
+  ordersPerHour     Float
+  motion            String    // "moving", "idle"
+  gpsPattern        String    // "smooth", "anomaly"
+  earnings          Float
+  active            Boolean   @default(true)
+}
+
+model EnvironmentState {
+  id                String    @id @default(uuid())
+  timestamp         DateTime  @default(now())
+  rain              Float
+  temperature       Float
+  aqi               Int
+  demandLevel       String    // "low", "medium", "high"
+  platformStatus    String    // "online", "outage"
+  isSimulated       Boolean   @default(false)
+}
+
+model Claim {
+  id                String    @id @default(uuid())
+  policy            Policy    @relation(fields: [policyId], references: [id])
+  policyId          String
+  user              User      @relation(fields: [userId], references: [id])
+  userId            String
+  triggerType       String    // RAIN, HEAT, DEMAND_CRASH, OUTAGE, POLLUTION
+  payoutAmount      Float
+  fraudScore        Float
+  activityScore     Float
+  status            String    @default("PENDING") // PENDING, PAID, REJECTED
+  createdAt         DateTime  @default(now())
+}

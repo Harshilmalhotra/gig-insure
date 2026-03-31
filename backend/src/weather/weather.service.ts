@@ -1,0 +1,50 @@
+import { Injectable } from '@nestjs/common';
+import axios from 'axios';
+import { PrismaService } from '../prisma/prisma.service';
+
+@Injectable()
+export class WeatherService {
+  private readonly apiKey = process.env.OPENWEATHER_API_KEY || 'MOCK_KEY';
+
+  constructor(private prisma: PrismaService) {}
+
+  async getCurrentWeather(lat: number = 19.076, lon: number = 72.877) {
+    // Check if there is a simulated environment state
+    const latestSim = await this.prisma.environmentState.findFirst({
+      where: { isSimulated: true },
+      orderBy: { timestamp: 'desc' },
+    });
+
+    if (latestSim) {
+      return {
+        rain: latestSim.rain,
+        temp: latestSim.temperature,
+        aqi: latestSim.aqi,
+        isSimulated: true,
+      };
+    }
+
+    // Attempt real API call if no simulation or if explicit override
+    try {
+      const response = await axios.get(
+        `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${this.apiKey}&units=metric`,
+      );
+      const data = response.data;
+      return {
+        rain: data.rain ? data.rain['1h'] || 0 : 0,
+        temp: data.main.temp,
+        aqi: 50, // Default for now
+        isSimulated: false,
+      };
+    } catch (e) {
+      // Fallback to safe defaults if API fails
+      return {
+        rain: 0,
+        temp: 30,
+        aqi: 50,
+        isSimulated: true,
+        error: 'API_FAILED',
+      };
+    }
+  }
+}
