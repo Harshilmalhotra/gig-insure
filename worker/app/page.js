@@ -5,8 +5,7 @@ import { Shield, MapPin, Activity, CheckCircle, User, ArrowUpRight, Zap, Trendin
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 
-// Config
-const API_BASE = "http://localhost:3005";
+import { API_BASE } from "./config";
 
 // Cookie helpers
 const getCookie = (n) => {

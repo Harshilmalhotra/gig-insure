@@ -22,7 +22,7 @@ import {
   Bar 
 } from 'recharts';
 
-const API_BASE = "http://localhost:3005/admin";
+import { API_BASE } from "../../config";
 
 export default function Overview() {
   const [metrics, setMetrics] = useState(null);

@@ -15,7 +15,7 @@ import {
   Play
 } from "lucide-react";
 
-const API_BASE = "http://localhost:3005/admin";
+import { API_BASE } from "../../config";
 
 export default function WorkerStateSimulation() {
   const [workers, setWorkers] = useState([]);
