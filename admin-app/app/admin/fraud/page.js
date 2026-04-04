@@ -53,7 +53,7 @@ export default function FraudIntelligence() {
   const handleResolve = async (id, status, notes) => {
     setResolving(true);
     try {
-      await axios.post(`${API_BASE}/admin/claims/${id}/resolve`, { status, notes });
+      await axios.post(`${API_BASE}/claims/${id}/resolve`, { status, notes });
       await fetchData();
       setSelectedReview(null);
     } catch (e) {

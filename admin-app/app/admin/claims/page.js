@@ -177,7 +177,7 @@ export default function ClaimsEngine() {
                <button 
                 onClick={async () => {
                    try {
-                     await axios.post(`${API_BASE}/admin/claims/${selectedClaim.id}/resolve`, { status: 'PAID', notes: 'Manual settlement via Claims Engine.' });
+                     await axios.post(`${API_BASE}/claims/${selectedClaim.id}/resolve`, { status: 'PAID', notes: 'Manual settlement via Claims Engine.' });
                      setSelectedClaim({...selectedClaim, status: 'PAID'});
                    } catch (e) { alert("Failed to execute transfer."); }
                 }}
