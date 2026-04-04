@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Shield, MapPin, Activity, CheckCircle, User, ArrowUpRight, Zap, TrendingUp, Lock, ChevronRight, Loader2, LogOut, Smartphone, ChevronLeft, Star, Coins, ShieldCheck, Hash, CloudRain, Thermometer, AlertCircle } from "lucide-react";
+import { Shield, MapPin, Activity, CheckCircle, User, ArrowUpRight, Zap, TrendingUp, Lock, ChevronRight, Loader2, LogOut, Smartphone, ChevronLeft, ChevronUp, ChevronDown, Star, Coins, ShieldCheck, Hash, CloudRain, Thermometer, AlertCircle, Camera } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 
@@ -65,7 +65,11 @@ export default function WorkerApp() {
 
   // --- Liveness Challenge State ---
   const videoRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const [videoChunks, setVideoChunks] = useState([]);
+  const [videoBlob, setVideoBlob] = useState(null);
   const [challengeStep, setChallengeStep] = useState(0);
+
   const [challengeDir, setChallengeDir] = useState([]); // Array of directions like ['LEFT', 'RIGHT', 'UP']
   const [challengeStatus, setChallengeStatus] = useState('idle'); // idle, scanning, complete
 
@@ -197,9 +201,44 @@ export default function WorkerApp() {
           } catch (e) {}
        }, 5000);
     }
-    return () => clearInterval(int);
-  }, [flow, user?.id, coords, motionState]);
+    return () => { if (int) clearInterval(int); };
+  }, [flow, user, motionState, coords, permissions]);
 
+  // --- HACKATHON DEMO SHORTCUT ---
+  useEffect(() => {
+    const handleKeyDown = async (e) => {
+      // Ctrl/Cmd + Shift + F -> Force Fraud Claim
+      if (e.shiftKey && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
+        e.preventDefault();
+        if (!user) return;
+        
+        try {
+           // 1. Ensure Policy Exists
+           if (user.policies?.length === 0) {
+              await axios.post(`${API_BASE}/insurance/policy/purchase`, { userId: user.id, premium: 350, coverage: 1500 });
+           }
+           
+           // 2. Override Environment to heavy Rain
+           await axios.post(`${API_BASE}/admin/simulation/environment`, { rain: 60, temperature: 30, aqi: 50, demandLevel: 'medium', platformStatus: 'online' });
+           
+           // 3. Override Worker State to Flagged GPS Anomaly
+           await axios.post(`${API_BASE}/admin/simulation/worker/${user.id}`, { forcedOrdersPerHour: null, forcedMotion: "static", forcedGpsPattern: "anomaly" });
+           
+           // 4. Update UI
+           setActiveTab("claims");
+           addLog("Demo Sequence Auto-Injected!", "success");
+           refreshData();
+        } catch (err) {
+           console.error("Demo shortcut failed", err);
+        }
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [user]);
+
+  // --- Liveness Challenge logic here ---
   useEffect(() => {
     if (uploadingClaim) {
       // 1. Initial Challenge Steps
@@ -754,7 +793,7 @@ export default function WorkerApp() {
       <AnimatePresence>
          {/* Video Proof Upload Modal - NEW Liveness Version */}
          {uploadingClaim && (
-           <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} className="fixed inset-0 z-[500] bg-black p-8 flex flex-col gap-8">
+           <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} className="fixed inset-0 z-500 bg-black p-8 flex flex-col gap-8">
               <div className="flex justify-between items-center mt-8">
                  <div>
                     <h2 className="text-3xl font-black italic uppercase text-white tracking-tight">Identity Guard.</h2>

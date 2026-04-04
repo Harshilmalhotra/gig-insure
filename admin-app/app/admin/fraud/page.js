@@ -86,8 +86,9 @@ export default function FraudIntelligence() {
 
       {/* REVIEW MODAL */}
       {selectedReview && (
-        <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-6">
+        <div className="fixed inset-0 z-100 bg-black/90 backdrop-blur-sm flex items-center justify-center p-6">
            <div className="bg-[#111] border border-white/10 w-full max-w-2xl rounded-[2.5rem] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+
               <div className="p-8 border-b border-white/5 flex justify-between items-center bg-white/5">
                  <div>
                     <h3 className="text-xl font-black text-white uppercase italic">Forensic Review</h3>
@@ -98,14 +99,26 @@ export default function FraudIntelligence() {
               
               <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
                  <div className="space-y-6">
-                    <div className="aspect-video bg-black rounded-3xl border border-white/5 flex flex-col items-center justify-center gap-4 relative group cursor-pointer overflow-hidden">
-                       <div className="absolute inset-0 bg-rose-500/10 opacity-50" />
-                       <Share2 className="text-white/20 w-12 h-12 relative z-10" />
-                       <p className="text-[10px] font-black text-white/40 uppercase relative z-10 tracking-widest">Evidence Video</p>
-                       <div className="absolute bottom-4 left-4 right-4 h-1 bg-white/10 rounded-full overflow-hidden">
-                          <div className="h-full bg-rose-500 w-[40%]" />
-                       </div>
+                    <div className="aspect-video bg-black rounded-3xl border border-white/5 flex flex-col items-center justify-center gap-4 relative group overflow-hidden">
+                       {selectedReview.evidenceUrl ? (
+                          <video 
+                            src={selectedReview.evidenceUrl} 
+                            controls 
+                            autoPlay 
+                            className="absolute inset-0 w-full h-full object-contain bg-black z-20"
+                          />
+                       ) : (
+                          <>
+                             <div className="absolute inset-0 bg-rose-500/10 opacity-50" />
+                             <Share2 className="text-white/20 w-12 h-12 relative z-10" />
+                             <p className="text-[10px] font-black text-white/40 uppercase relative z-10 tracking-widest">Evidence Video Unavailable</p>
+                             <div className="absolute bottom-4 left-4 right-4 h-1 bg-white/10 rounded-full overflow-hidden">
+                                <div className="h-full bg-rose-500 w-[40%]" />
+                             </div>
+                          </>
+                       )}
                     </div>
+
                     <div className="p-4 bg-white/5 rounded-2xl border border-white/5 space-y-1">
                        <p className="text-[8px] font-black text-slate-500 uppercase">System Flag</p>
                        <p className="text-xs font-bold text-rose-400 italic">"GPS Coordinates displaced +0.4km without IMU motion sync"</p>

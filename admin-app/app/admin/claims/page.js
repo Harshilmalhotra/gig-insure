@@ -174,8 +174,17 @@ export default function ClaimsEngine() {
             </div>
 
             <div className="p-6 border-t border-white/5 bg-[#181818]">
-               <button className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-sm rounded-2xl shadow-xl shadow-emerald-500/20 transition-all flex items-center justify-center gap-2 uppercase tracking-wide">
-                 Execute Transfer <ArrowRight size={16}/>
+               <button 
+                onClick={async () => {
+                   try {
+                     await axios.post(`${API_BASE}/admin/claims/${selectedClaim.id}/resolve`, { status: 'PAID', notes: 'Manual settlement via Claims Engine.' });
+                     setSelectedClaim({...selectedClaim, status: 'PAID'});
+                   } catch (e) { alert("Failed to execute transfer."); }
+                }}
+                disabled={selectedClaim.status !== 'PENDING' && selectedClaim.status !== 'PENDING_REVIEW' && selectedClaim.status !== 'FLAGGED'}
+                className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-sm rounded-2xl shadow-xl shadow-emerald-500/20 transition-all flex items-center justify-center gap-2 uppercase tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
+               >
+                 {selectedClaim.status === 'PAID' ? 'Settlement Executed' : 'Execute Transfer'} <ArrowRight size={16}/>
                </button>
             </div>
           </>
