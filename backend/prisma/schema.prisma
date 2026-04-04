@@ -18,6 +18,9 @@ model User {
   platform          String        // Swiggy, Zomato
   baseEarnings      Float         @default(0)
   baseRating        Float         @default(0)
+  avgDailyEarnings  Float         @default(0) // Field added for mock platform sync
+  ordersPerHour     Float         @default(0) // Field added for mock platform sync
+  rating            Float         @default(0) // Field added for mock platform sync
   consistencyScore  Float         @default(0)
   createdAt         DateTime      @default(now())
   policies          Policy[]
