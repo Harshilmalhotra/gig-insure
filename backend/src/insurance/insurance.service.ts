@@ -106,11 +106,28 @@ export class InsuranceService {
 
     if (activePolicy) {
       const weatherData = await this.weather.getCurrentWeather(effectiveTelemetry.lat, effectiveTelemetry.lon);
+      const envState = await this.prisma.environmentState.findFirst({ orderBy: { timestamp: 'desc' } });
+      
       let trigger: string | null = null;
 
-      if (weatherData.rain > 20) trigger = 'RAIN'; // Updated threshold
+      // 1. Environmental Triggers
+      if (weatherData.rain > 20) trigger = 'RAIN'; 
       else if (weatherData.temp > 43) trigger = 'HEAT';
       else if (weatherData.platformStatus === 'outage') trigger = 'PLATFORM_OUTAGE';
+      
+      // 2. Behavioral/Market Trigger (Demand Crash)
+      if (!trigger && envState?.demandLevel === 'low' && effectiveTelemetry.ordersPerHour < 1) {
+        trigger = 'DEMAND_CRASH';
+      }
+
+      const weather = {
+        temp: weatherData.temp,
+        rain: weatherData.rain,
+        platformStatus: weatherData.platformStatus,
+        isSimulated: weatherData.isSimulated
+      };
+
+      const isOverridden = user.forcedOrdersPerHour !== null || user.forcedMotion !== null || user.forcedGpsPattern !== null;
 
       if (trigger) {
         const recentClaim = await this.prisma.claim.findFirst({
@@ -134,9 +151,37 @@ export class InsuranceService {
               status: 'PAID', // Auto-pay in real-world demo
             },
           });
-          return { activeTrigger: trigger, payoutProcessed: true, payoutAmount: Math.round(payout) };
+          return { 
+            activeTrigger: trigger, 
+            payoutProcessed: true, 
+            payoutAmount: Math.round(payout),
+            weather,
+            isOverridden,
+            disruptionDetails: {
+              event: trigger,
+              zoneImpact: trigger === 'RAIN' ? '-65%' : '-40%',
+              estimatedLoss: Math.round(payout * 1.2),
+              reason: trigger === 'RAIN' ? 'Heavy precipitation detected in zone.' : 'Reduced demand / System latency.'
+            }
+          };
         }
       }
+      
+      // If trigger active but on cooldown, still return disruption details for UI
+      if (trigger) {
+        return { 
+            activeTrigger: trigger,
+            weather,
+            isOverridden,
+            disruptionDetails: {
+              event: trigger,
+              zoneImpact: trigger === 'RAIN' ? '-65%' : '-40%',
+              estimatedLoss: 400,
+              reason: 'Environmental sensors reporting active disruption.'
+            }
+        };
+      }
+      return { status: 'OK', weather, isOverridden };
     }
     return { status: 'OK' };
   }
