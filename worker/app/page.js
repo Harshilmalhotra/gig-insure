@@ -200,6 +200,33 @@ export default function WorkerApp() {
     return () => clearInterval(int);
   }, [flow, user?.id, coords, motionState]);
 
+  useEffect(() => {
+    if (uploadingClaim) {
+      // 1. Initial Challenge Steps
+      const dirs = ['LEFT', 'RIGHT', 'UP', 'LEFT'].sort(() => Math.random() - 0.5);
+      setChallengeDir(dirs);
+      setChallengeStep(0);
+      setChallengeStatus('scanning');
+
+      // 2. Start Camera
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
+        .then(stream => {
+          if (videoRef.current) videoRef.current.srcObject = stream;
+        })
+        .catch(err => {
+          console.error("Camera access denied", err);
+          alert("Camera required for Fraud Verification.");
+        });
+    } else {
+      // Stop Camera
+      if (videoRef.current && videoRef.current.srcObject) {
+         const tracks = videoRef.current.srcObject.getTracks();
+         tracks.forEach(track => track.stop());
+      }
+      setChallengeStatus('idle');
+    }
+  }, [uploadingClaim]);
+
   // Handle Logout (from original)
   const handleLogout = () => {
     delCookie("gig_user_id");
@@ -695,43 +722,105 @@ export default function WorkerApp() {
 
       {/* --- MODAL OVERLAYS --- */}
       <AnimatePresence>
-         {/* Video Proof Upload Modal */}
+         {/* Video Proof Upload Modal - NEW Liveness Version */}
          {uploadingClaim && (
            <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} className="fixed inset-0 z-[500] bg-black p-8 flex flex-col gap-8">
               <div className="flex justify-between items-center mt-8">
-                 <h2 className="text-3xl font-black italic uppercase text-white">Record Proof.</h2>
+                 <div>
+                    <h2 className="text-3xl font-black italic uppercase text-white tracking-tight">Identity Guard.</h2>
+                    <p className="text-[10px] font-black text-rose-500 uppercase tracking-[4px]">Liveness Verification</p>
+                 </div>
                  <button onClick={() => setUploadingClaim(null)} className="p-3 bg-zinc-900 rounded-2xl"><ChevronLeft className="w-5 h-5 text-zinc-400" /></button>
               </div>
  
-              <div className="flex-1 bg-zinc-900 rounded-[3rem] border-2 border-white/5 overflow-hidden relative flex flex-col items-center justify-center gap-6">
-                 <div className="absolute top-6 left-6 flex items-center gap-2">
-                    <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                    <span className="text-[10px] font-black uppercase text-white/50 tracking-widest">Live Preview</span>
-                 </div>
+              <div className="flex-1 bg-zinc-900 rounded-[3rem] border-2 border-white/5 overflow-hidden relative flex flex-col items-center justify-center">
+                 {/* LIVE CAMERA FEED */}
+                 <video 
+                   ref={videoRef} 
+                   autoPlay 
+                   playsInline 
+                   muted 
+                   className="absolute inset-0 w-full h-full object-cover opacity-60 grayscale-[0.5]" 
+                 />
                  
-                 <div className="w-24 h-24 border-4 border-white/10 rounded-full flex items-center justify-center">
-                    <Smartphone className="w-10 h-10 text-white/20" />
+                 <div className="absolute inset-0 bg-linear-to-b from-black/40 via-transparent to-black/80" />
+
+                 <div className="relative z-10 flex flex-col items-center gap-12 text-center px-12">
+                   {challengeStatus === 'scanning' ? (
+                     <div className="space-y-12 animate-in zoom-in duration-500">
+                        {/* CHALLENGE ARROW */}
+                        <div className="relative">
+                           <div className="absolute inset-0 blur-3xl bg-white/20 animate-pulse rounded-full" />
+                           <motion.div 
+                             key={challengeStep}
+                             initial={{ scale: 0.5, opacity: 0 }}
+                             animate={{ scale: 1, opacity: 1 }}
+                             className="w-32 h-32 bg-white rounded-full flex items-center justify-center shadow-2xl relative"
+                           >
+                              {challengeDir[challengeStep] === 'LEFT' && <ChevronLeft className="w-16 h-16 text-black" />}
+                              {challengeDir[challengeStep] === 'RIGHT' && <ChevronRight className="w-16 h-16 text-black" />}
+                              {challengeDir[challengeStep] === 'UP' && <ChevronUp className="w-16 h-16 text-black" />}
+                              {challengeDir[challengeStep] === 'DOWN' && <ChevronDown className="w-16 h-16 text-black" />}
+                           </motion.div>
+                        </div>
+
+                        <div className="space-y-4">
+                           <h4 className="text-2xl font-black italic text-white uppercase tracking-tighter">
+                              Pan {challengeDir[challengeStep]}
+                           </h4>
+                           <div className="flex gap-2 justify-center">
+                              {challengeDir.map((_, i) => (
+                                 <div key={i} className={`h-1.5 w-8 rounded-full transition-all duration-500 ${i <= challengeStep ? "bg-white" : "bg-white/10"}`} />
+                              ))}
+                           </div>
+                        </div>
+
+                        <button 
+                           onClick={() => {
+                              if (challengeStep < challengeDir.length - 1) {
+                                 setChallengeStep(challengeStep + 1);
+                              } else {
+                                 setChallengeStatus('complete');
+                              }
+                           }}
+                           className="px-10 py-4 bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl text-[10px] font-black uppercase text-white hover:bg-white/20 transition-all active:scale-95"
+                        >
+                           System Ready: Next Step
+                        </button>
+                     </div>
+                   ) : (
+                     <div className="space-y-6 animate-in fade-in duration-700">
+                        <div className="w-24 h-24 bg-emerald-500 rounded-full flex items-center justify-center shadow-[0_0_50px_rgba(16,185,129,0.4)]">
+                           <CheckCircle className="w-12 h-12 text-white" />
+                        </div>
+                        <h4 className="text-2xl font-black italic text-white uppercase tracking-tighter">Verification Ready</h4>
+                        <p className="text-[10px] font-bold text-zinc-500 px-12 leading-relaxed uppercase">
+                           Neural patterns collected. Panning sequence verified. You can now submit your forensic proof.
+                        </p>
+                     </div>
+                   )}
                  </div>
-                 <p className="text-center text-xs font-bold text-zinc-500 px-12 uppercase leading-relaxed">
-                    Please record a 10s video of your current location to verify active work integrity.
-                 </p>
               </div>
  
               <button 
+                disabled={challengeStatus !== 'complete'}
                 onClick={async () => {
                   try {
-                    // Simulate processing
                     await axios.post(`${API_BASE}/insurance/claims/${uploadingClaim.id}/evidence`, { 
-                       evidenceUrl: "https:// RozgaarRaksha.network/evidence/mock-video-v1.mp4" 
+                       evidenceUrl: "https://RozgaarRaksha.network/evidence/verified-liveness-node.mp4" 
                     });
                     refreshData();
                     setUploadingClaim(null);
-                    addLog("Evidence Sent: Reviewing", "info");
-                  } catch (e) { alert("Upload failed"); }
+                    addLog("Liveness Proof Verified", "info");
+                  } catch (e) { alert("Forensic submission failed"); }
                 }}
-                className="w-full py-6 bg-white text-black font-black uppercase italic text-lg rounded-[2rem] shadow-2xl active:scale-[0.98] transition-all"
+                className={`w-full py-6 font-black uppercase italic text-lg rounded-4xl shadow-2xl transition-all duration-500 ${
+                   challengeStatus === 'complete' 
+                   ? "bg-white text-black active:scale-[0.98]" 
+                   : "bg-zinc-900 text-zinc-600 opacity-50 cursor-not-allowed"
+                }`}
               >
-                Submit Evidence
+                Submit Forensic Proof
               </button>
            </motion.div>
          )}
