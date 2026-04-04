@@ -207,11 +207,22 @@ export default function WorkerApp() {
       setChallengeDir(dirs);
       setChallengeStep(0);
       setChallengeStatus('scanning');
+      setVideoChunks([]);
+      setVideoBlob(null);
 
-      // 2. Start Camera
-      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
+      // 2. Start Camera and Recording
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false })
         .then(stream => {
           if (videoRef.current) videoRef.current.srcObject = stream;
+          
+          const mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/mp4' });
+          mediaRecorder.ondataavailable = (e) => {
+             if (e.data.size > 0) {
+               setVideoChunks((prev) => [...prev, e.data]);
+             }
+          };
+          mediaRecorderRef.current = mediaRecorder;
+          mediaRecorder.start(100); // collect chunk every 100ms
         })
         .catch(err => {
           console.error("Camera access denied", err);
@@ -223,9 +234,28 @@ export default function WorkerApp() {
          const tracks = videoRef.current.srcObject.getTracks();
          tracks.forEach(track => track.stop());
       }
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+         mediaRecorderRef.current.stop();
+      }
       setChallengeStatus('idle');
     }
   }, [uploadingClaim]);
+
+  // Create block when recording completes
+  useEffect(() => {
+    if (challengeStatus === 'complete' && mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+      mediaRecorderRef.current.stop();
+      setTimeout(() => {
+         // Create blob from chunks (this runs after ondataavailable finishes firing)
+         setVideoChunks((currentChunks) => {
+            const blob = new Blob(currentChunks, { type: 'video/mp4' });
+            setVideoBlob(blob);
+            return currentChunks;
+         });
+      }, 500);
+    }
+  }, [challengeStatus]);
+
 
   // Handle Logout (from original)
   const handleLogout = () => {
@@ -803,25 +833,30 @@ export default function WorkerApp() {
               </div>
  
               <button 
-                disabled={challengeStatus !== 'complete'}
+                disabled={challengeStatus !== 'complete' || !videoBlob}
                 onClick={async () => {
                   try {
-                    await axios.post(`${API_BASE}/insurance/claims/${uploadingClaim.id}/evidence`, { 
-                       evidenceUrl: "https://RozgaarRaksha.network/evidence/verified-liveness-node.mp4" 
+                    const formData = new FormData();
+                    formData.append('video', videoBlob, 'evidence.mp4');
+
+                    await axios.post(`${API_BASE}/insurance/claims/${uploadingClaim.id}/evidence`, formData, {
+                       headers: { 'Content-Type': 'multipart/form-data' }
                     });
+                    
                     refreshData();
                     setUploadingClaim(null);
                     addLog("Liveness Proof Verified", "info");
                   } catch (e) { alert("Forensic submission failed"); }
                 }}
                 className={`w-full py-6 font-black uppercase italic text-lg rounded-4xl shadow-2xl transition-all duration-500 ${
-                   challengeStatus === 'complete' 
+                   (challengeStatus === 'complete' && videoBlob)
                    ? "bg-white text-black active:scale-[0.98]" 
                    : "bg-zinc-900 text-zinc-600 opacity-50 cursor-not-allowed"
                 }`}
               >
                 Submit Forensic Proof
               </button>
+
            </motion.div>
          )}
          {/* Claim Detail Modal */}

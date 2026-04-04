@@ -8,6 +8,7 @@ import { MockPlatformModule } from './mock-platform/mock-platform.module';
 import { InsuranceModule } from './insurance/insurance.module';
 import { AuthModule } from './auth/auth.module';
 import { AdminModule } from './admin/admin.module';
+import { StorageModule } from './storage/storage.module';
 
 @Module({
   imports: [
@@ -17,7 +18,8 @@ import { AdminModule } from './admin/admin.module';
     MockPlatformModule, 
     InsuranceModule, 
     AuthModule, 
-    AdminModule
+    AdminModule,
+    StorageModule
   ],
   controllers: [AppController],
   providers: [AppService],

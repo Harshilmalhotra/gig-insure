@@ -1,12 +1,15 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { InsuranceService } from './insurance.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { StorageService } from '../storage/storage.service';
 
 @Controller('insurance')
 export class InsuranceController {
   constructor(
     private insurance: InsuranceService,
     private prisma: PrismaService,
+    private storageService: StorageService,
   ) {}
 
   @Get('quote/:userId')
@@ -56,14 +59,28 @@ export class InsuranceController {
   }
 
   @Post('claims/:id/evidence')
-  async submitProof(@Param('id') id: string, @Body() data: { evidenceUrl: string }) {
+  @UseInterceptors(FileInterceptor('video'))
+  async submitProof(
+    @Param('id') id: string, 
+    @UploadedFile() file: Express.Multer.File,
+    @Body() data: { evidenceUrl?: string }
+  ) {
     console.log(`[WORKER] Evidence submitted for claim ${id}`);
+    let url = data.evidenceUrl;
+    
+    // If a real file is uploaded, upload it to OCI
+    if (file) {
+       console.log(`Uploading ${file.size} bytes video to OCI...`);
+       url = await this.storageService.uploadVideo(id, file.buffer);
+    }
+    
     return this.prisma.claim.update({
       where: { id },
       data: {
-        evidenceUrl: data.evidenceUrl,
+        evidenceUrl: url,
         status: 'PENDING_REVIEW'
       }
     });
   }
 }
+
