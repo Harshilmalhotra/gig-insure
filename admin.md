@@ -311,7 +311,7 @@ System signals
 
 Width: 220px
 
-Pulse Admin
+Raksha Admin
 
 ● System Live
 

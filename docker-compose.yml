@@ -3,13 +3,13 @@ version: '3.8'
 services:
   postgres:
     image: postgres:15
-    container_name: gig-insure-db
+    container_name: rozgaar-raksha-db
     ports:
       - "5433:5432"
     environment:
       POSTGRES_USER: giguser
       POSTGRES_PASSWORD: gigpassword
-      POSTGRES_DB: giginsure
+      POSTGRES_DB: rozgaar_raksha
     volumes:
       - postgres_data:/var/lib/postgresql/data
 

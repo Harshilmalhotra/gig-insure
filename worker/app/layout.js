@@ -12,7 +12,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "GigInsure Worker Portal",
+  title: "Rozgaar Raksha Worker Portal",
   description: "Real-time parametric insurance for the gig economy. Protect your earnings instantly.",
 };
 

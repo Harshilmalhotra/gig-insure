@@ -227,6 +227,32 @@ export class AdminController {
     return { success: true, magnitude: data.magnitude };
   }
 
+  @Post('simulation/reset')
+  async resetSimulation() {
+    // 1. Reset Environment
+    await this.prisma.environmentState.create({
+      data: {
+        rain: 0,
+        temperature: 28,
+        aqi: 45,
+        demandLevel: 'high',
+        platformStatus: 'online',
+        isSimulated: false
+      }
+    });
+
+    // 2. Clear all worker overrides
+    await this.prisma.user.updateMany({
+      data: {
+        forcedMotion: null,
+        forcedGpsPattern: null,
+        forcedOrdersPerHour: null
+      }
+    });
+
+    return { success: true, message: 'Simulation stopped and reset to live defaults.' };
+  }
+
   @Get('events')
   async getLiveEvents() {
     const claims = await this.prisma.claim.findMany({

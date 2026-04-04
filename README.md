@@ -1,6 +1,6 @@
 <div align="center">
 
-# GigInsure
+# Rozgaar Raksha
 
 ### **Proof-of-Work Insurance for Gig Workers**
 
@@ -28,7 +28,7 @@
 - [Technical Architecture](#technical-architecture)
 - [Reputation-Based Pricing](#reputation-based-pricing)
 - [Payout Logic](#final-payout-logic)
-- [Why GigInsure Wins](#why-giginsure-wins)
+- [Why Rozgaar Raksha Wins](#why-rozgaar-raksha-wins)
 - [Future Scope](#future-scope)
 
 ---
@@ -55,13 +55,13 @@ Existing parametric insurance models fall short because they:
 - Are **vulnerable to GPS spoofing and fraud**, leading to massive payout leakage
 - Offer **no personalization** — every worker gets the same plan regardless of their risk profile
 
-> **GigInsure was built to solve exactly this — a system that protects real workers, based on real activity, with real fraud resistance.**
+> **Rozgaar Raksha was built to solve exactly this — a system that protects real workers, based on real activity, with real fraud resistance.**
 
 ---
 
 ## Solution
 
-**GigInsure** is a platform that provides **personalized, activity-verified insurance** for gig workers. It fundamentally rethinks how income protection should work in the gig economy.
+**Rozgaar Raksha** is a platform that provides **personalized, activity-verified insurance** for gig workers. It fundamentally rethinks how income protection should work in the gig economy.
 
 ### How it works at a high level:
 
@@ -78,7 +78,7 @@ Existing parametric insurance models fall short because they:
 └──────────────────┘      └──────────────────┘      └──────────────────┘
 ```
 
-**GigInsure:**
+**Rozgaar Raksha:**
 - **Connects** with gig platforms to aggregate worker data
 - **Analyzes** earnings history, behavioral patterns, and activity signals
 - **Offers** personalized weekly insurance plans based on individual risk profiles
@@ -88,9 +88,9 @@ Existing parametric insurance models fall short because they:
 
 ## Core Innovation: Proof-of-Work Insurance (PoWI)
 
-This is what sets GigInsure apart from every other solution in the market.
+This is what sets Rozgaar Raksha apart from every other solution in the market.
 
-> **Traditional systems trust location. GigInsure trusts behavior consistency.**
+> **Traditional systems trust location. Rozgaar Raksha trusts behavior consistency.**
 
 A worker is eligible for payout **only if** their activity passes a multi-signal validation check:
 
@@ -127,7 +127,7 @@ Our users are **not** just "delivery partners." They are individuals navigating 
 
 ### What this implies for product design:
 
-| User Expectation | GigInsure's Response |
+| User Expectation | Rozgaar Raksha's Response |
 |:---|:---|
 | **Instant payouts** | Claims processed and paid within minutes, not days |
 | **No complex verification** | Minimal-friction validation; no lengthy forms or paperwork |
@@ -144,7 +144,7 @@ Our users are **not** just "delivery partners." They are individuals navigating 
 
 ## System Overview — How It Works
 
-GigInsure operates through a **7-stage pipeline**, from onboarding to payout delivery.
+Rozgaar Raksha operates through a **7-stage pipeline**, from onboarding to payout delivery.
 
 ### Stage 1: Onboarding
 
@@ -227,7 +227,7 @@ Before any payout is issued, the system asks two critical questions:
 
 ## Market Crash Handling — Critical Scenario
 
-GigInsure goes **far beyond weather-based triggers**. We handle the scenarios that other insurance products completely ignore.
+Rozgaar Raksha goes **far beyond weather-based triggers**. We handle the scenarios that other insurance products completely ignore.
 
 ### The problem:
 
@@ -243,7 +243,7 @@ The worker is **online, active, and ready** — but earns nothing. No existing i
 
 ### Our approach:
 
-GigInsure detects market crashes through:
+Rozgaar Raksha detects market crashes through:
 
 - **Drop in orders/hour** below the area's historical baseline
 - **Area-wide inactivity** — when multiple workers in the same zone report low activity
@@ -262,13 +262,13 @@ THEN → Payout is triggered
 
 - Covers **real-world income instability**, not just weather events
 - Expands protection to **demand-based disruptions** that workers can't control
-- Makes GigInsure a true **income protection system**, not just parametric insurance
+- Makes Rozgaar Raksha a true **income protection system**, not just parametric insurance
 
 ---
 
 ## Adversarial Defense & Anti-Spoofing Strategy
 
-GigInsure is **architected from the ground up** to resist spoofing, fraud, and coordinated attacks. Security is not a feature — it's a foundation.
+Rozgaar Raksha is **architected from the ground up** to resist spoofing, fraud, and coordinated attacks. Security is not a feature — it's a foundation.
 
 ### 1. Core Philosophy: Behavior Over Location
 
@@ -293,7 +293,7 @@ We do **not** rely on GPS alone. We validate the full spectrum of worker behavio
 
 ### 2. Multi-Signal Fraud Detection Pipeline
 
-GigInsure uses **6 independent signal layers** to build a comprehensive fraud score:
+Rozgaar Raksha uses **6 independent signal layers** to build a comprehensive fraud score:
 
 <div align="center">
 
@@ -361,7 +361,7 @@ Our claim handling pipeline balances **fraud prevention with UX fairness**:
 
 ## AI / ML Architecture
 
-GigInsure's intelligence evolves in phases, starting practical and scaling toward full automation.
+Rozgaar Raksha's intelligence evolves in phases, starting practical and scaling toward full automation.
 
 ### Phase 1 — MVP (Rule-Based Scoring)
 
@@ -409,7 +409,7 @@ The full system architecture showing the end-to-end data flow:
 
 <div align="center">
 
-![GigInsure System Architecture](assets/system_architecture.jpg)
+![Rozgaar Raksha System Architecture](assets/system_architecture.jpg)
 
 *Figure 5: Complete system architecture — from data ingestion to payout delivery*
 
@@ -442,7 +442,7 @@ Trust Score = f(behavioral_consistency, claim_history, activity_regularity, frau
 | **Medium Trust** | Some inconsistencies, new account, limited history | **Standard premiums** — building reputation |
 | **Low Trust** | Suspicious activity, past flags, irregular patterns | **Higher premiums** — incentivized to improve |
 
-> The system is designed to **reward good behavior over time**, creating a positive feedback loop where genuine workers get better rates the longer they use GigInsure.
+> The system is designed to **reward good behavior over time**, creating a positive feedback loop where genuine workers get better rates the longer they use Rozgaar Raksha.
 
 ---
 
@@ -482,9 +482,9 @@ This ensures payouts are **proportional to actual verified effort**, not binary 
 
 ---
 
-## Why GigInsure Wins
+## Why Rozgaar Raksha Wins
 
-| Feature | Traditional Insurance | GigInsure |
+| Feature | Traditional Insurance | Rozgaar Raksha |
 |:---|:---|:---|
 | **Trigger Model** | Weather only | Weather + Market Crash + Platform Outage |
 | **Validation** | None or GPS-only | Multi-signal Proof-of-Work (PoWI) |

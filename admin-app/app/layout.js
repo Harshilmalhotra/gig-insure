@@ -1,6 +1,7 @@
 "use client";
 
 import { Geist, Geist_Mono } from "next/font/google";
+
 import "./globals.css";
 import { 
   ShieldCheck, 
@@ -15,6 +16,7 @@ import {
   Users,
   Activity,
   History,
+  XCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -51,6 +53,10 @@ export default function RootLayout({ children }) {
     return () => clearInterval(int);
   }, []);
 
+  useEffect(() => {
+    document.title = "Rozgaar Raksha Admin";
+  }, []);
+
   const navItems = [
     { name: "Overview", path: "/admin/overview", icon: <LayoutDashboard size={18} />, group: "CORE" },
     { name: "Claims Engine", path: "/admin/claims", icon: <Archive size={18} />, group: "CORE" },
@@ -72,7 +78,7 @@ export default function RootLayout({ children }) {
           <aside className="w-[240px] flex-shrink-0 bg-[#111] border-r border-white/5 flex flex-col">
             <div className="p-6">
               <h1 className="text-xl font-black text-white flex items-center gap-2">
-                <ShieldCheck className="text-blue-500" /> Pulse Admin
+                <ShieldCheck className="text-blue-500" /> Rozgaar Raksha Admin
               </h1>
               <div className="mt-2 flex items-center gap-2 text-[10px] uppercase font-bold text-emerald-500">
                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -103,6 +109,21 @@ export default function RootLayout({ children }) {
                 </div>
               ))}
             </nav>
+            
+            <div className="p-4 border-t border-white/5 mt-auto">
+              <button 
+                onClick={async () => {
+                  try {
+                    await axios.post(`${API_BASE}/simulation/reset`);
+                    alert("Simulation stopped. All overrides cleared.");
+                    window.location.reload();
+                  } catch (e) { console.error(e); }
+                }}
+                className="w-full py-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-[10px] font-black uppercase tracking-widest hover:bg-rose-500/20 transition-all flex items-center justify-center gap-2"
+              >
+                <XCircle size={14} /> Stop Simulation
+              </button>
+            </div>
           </aside>
 
           {/* Main Content Area */}

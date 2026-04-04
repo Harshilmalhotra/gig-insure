@@ -1,6 +1,6 @@
-# Gig-Insure Implementation Plan
+# Rozgaar Raksha Implementation Plan
 
-This plan outlines the phase-wise development of the Gig-Insure hybrid parametric insurance system, specifically focusing on the `backend` and `admin-app`.
+This plan outlines the phase-wise development of the Rozgaar Raksha hybrid parametric insurance system, specifically focusing on the `backend` and `admin-app`.
 
 ## 🏗️ Architecture Overview
 - **Backend**: Node.js + Express + Prisma (PostgreSQL)

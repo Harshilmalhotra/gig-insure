@@ -214,7 +214,7 @@ export default function WorkerApp() {
             <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full p-8 flex flex-col justify-center gap-12">
               <div className="space-y-6">
                 <div className="w-16 h-16 bg-[#00d2ff10] border border-[#00d2ff20] rounded-2xl flex items-center justify-center shadow-lg"><Shield className="w-8 h-8 text-[#00d2ff] animate-pulse" /></div>
-                <h1 className="text-6xl font-black italic uppercase tracking-tighter leading-[0.85]">Gig<span className="text-[#00d2ff] block">Pulse.</span></h1>
+                <h1 className="text-6xl font-black italic uppercase tracking-tighter leading-[0.85]">Rozgaar<span className="text-[#00d2ff] block">Raksha.</span></h1>
                 <p className="text-zinc-500 text-sm font-medium pr-10">Instant income protection for the modern workforce. Zero paperwork, automated claims.</p>
               </div>
               <div className="space-y-4">
@@ -261,7 +261,7 @@ export default function WorkerApp() {
 
           {flow === "signup_sensors" && (
             <motion.div key="s2" initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} className="h-full p-8 flex flex-col gap-10">
-              <div className="space-y-2"><h2 className="text-3xl font-black text-white">Hardware Pairing</h2><p className="text-zinc-500 text-sm">GigPulse uses live telemetry to settle claims instantly.</p></div>
+              <div className="space-y-2"><h2 className="text-3xl font-black text-white">Hardware Pairing</h2><p className="text-zinc-500 text-sm">Rozgaar Raksha uses live telemetry to settle claims instantly.</p></div>
               <div className="space-y-4">
                  <button onClick={() => setPermissions(p => ({...p, gps: true}))} className={`w-full p-6 bg-zinc-900/50 rounded-3xl border-2 ${permissions.gps ? "border-emerald-500" : "border-zinc-800"} flex items-center justify-between`}>
                     <MapPin className="text-[#00d2ff]" /><span className="text-xs font-black uppercase flex-1 px-4 text-left">Live GPS</span> {permissions.gps && <CheckCircle className="text-emerald-500" />}
@@ -308,7 +308,7 @@ export default function WorkerApp() {
                 <div className="p-8 pb-32 space-y-8 text-left animate-in fade-in transition-all">
                   <header className="flex justify-between items-center">
                     <div>
-                      <h2 className="text-3xl font-black uppercase italic tracking-tighter leading-none text-white">Active<br/>Pulse.</h2>
+                      <h2 className="text-3xl font-black uppercase italic tracking-tighter leading-none text-white">Active<br/>Raksha.</h2>
                       <p className="text-[10px] font-black text-zinc-500 mt-2 uppercase tracking-widest">{user.name} · {user.platform}</p>
                     </div>
                     <div className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[10px] font-black rounded-full uppercase">Active 🟢</div>
@@ -621,8 +621,8 @@ export default function WorkerApp() {
                     <div className="glass p-8 rounded-4xl border-emerald-500/20 bg-emerald-500/5 mb-6">
                        <h4 className="text-[10px] font-black text-emerald-500 uppercase mb-4 tracking-[2px]">Impact Statement</h4>
                        <div className="space-y-4">
-                          <div className="flex justify-between items-center"><span className="text-xs font-bold text-zinc-500">Without Pulse</span><span className="text-xs font-black text-red-500">Lost ₹{user.claims?.reduce((acc, c) => acc + (c.status === 'PAID' ? c.payoutAmount : 0), 0).toFixed(0)} today</span></div>
-                          <div className="flex justify-between items-center"><span className="text-xs font-bold text-zinc-500">With Pulse</span><span className="text-xs font-black text-emerald-500">₹0 Loss Recovered</span></div>
+                           <div className="flex justify-between items-center"><span className="text-xs font-bold text-zinc-500">Without Rozgaar Raksha</span><span className="text-xs font-black text-red-500">Lost ₹{user.claims?.reduce((acc, c) => acc + (c.status === 'PAID' ? c.payoutAmount : 0), 0).toFixed(0)} today</span></div>
+                           <div className="flex justify-between items-center"><span className="text-xs font-bold text-zinc-500">With Rozgaar Raksha</span><span className="text-xs font-black text-emerald-500">₹0 Loss Recovered</span></div>
                        </div>
                     </div>
 

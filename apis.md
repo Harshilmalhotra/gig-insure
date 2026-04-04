@@ -1,6 +1,6 @@
-# Gig-Insure API Documentation 🚀
+# Rozgaar Raksha API Documentation 🚀
 
-This document provides a guide for frontend developers to integrate with the Gig-Insure backend.
+This document provides a guide for frontend developers to integrate with the Rozgaar Raksha backend.
 
 **Base URL**: `http://127.0.0.1:3001` (CORS enabled)
 
