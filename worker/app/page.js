@@ -617,13 +617,18 @@ export default function WorkerApp() {
                       <li className="p-5 bg-zinc-900/50 rounded-2xl flex justify-between items-center cursor-pointer hover:bg-red-500/10 transition-colors" onClick={handleLogout}><span className="text-xs font-bold text-red-500">Deauthorize Device</span><LogOut className="w-4 h-4 text-red-500" /></li>
                    </ul>
 
-                    <div className="glass p-8 rounded-4xl border-emerald-500/20 bg-emerald-500/5 mb-6">
-                       <h4 className="text-[10px] font-black text-emerald-500 uppercase mb-4 tracking-[2px]">Impact Statement</h4>
-                       <div className="space-y-4">
-                           <div className="flex justify-between items-center"><span className="text-xs font-bold text-zinc-500">Without Rozgaar Raksha</span><span className="text-xs font-black text-red-500">Lost ₹{user.claims?.reduce((acc, c) => acc + (c.status === 'PAID' ? c.payoutAmount : 0), 0).toFixed(0)} today</span></div>
-                           <div className="flex justify-between items-center"><span className="text-xs font-bold text-zinc-500">With Rozgaar Raksha</span><span className="text-xs font-black text-emerald-500">₹0 Loss Recovered</span></div>
-                       </div>
-                    </div>
+                    {(() => {
+                        const totalRecovered = user.claims?.reduce((acc, c) => acc + (c.status === 'PAID' ? c.payoutAmount : 0), 0) || 0;
+                        return (
+                          <div className="glass p-8 rounded-4xl border-emerald-500/20 bg-emerald-500/5 mb-6">
+                            <h4 className="text-[10px] font-black text-emerald-500 uppercase mb-4 tracking-[2px]">Impact Statement</h4>
+                            <div className="space-y-4">
+                                <div className="flex justify-between items-center"><span className="text-xs font-bold text-zinc-500">Without Rozgaar Raksha</span><span className="text-xs font-black text-red-500">Lost ₹{totalRecovered.toFixed(0)}</span></div>
+                                <div className="flex justify-between items-center"><span className="text-xs font-bold text-zinc-500">With Rozgaar Raksha</span><span className="text-xs font-black text-emerald-500">₹{totalRecovered.toFixed(0)} Recovered</span></div>
+                            </div>
+                          </div>
+                        );
+                    })()}
 
                     <div className="glass p-8 rounded-4xl border-zinc-800 border bg-zinc-900/40">
                        <h4 className="text-[10px] font-black text-zinc-600 uppercase mb-4 tracking-[4px]">Ecosystem Settings</h4>
