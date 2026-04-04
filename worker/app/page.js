@@ -63,6 +63,12 @@ export default function WorkerApp() {
   const [showFraudDemo, setShowFraudDemo] = useState(false);
   const [uploadingClaim, setUploadingClaim] = useState(null);
 
+  // --- Liveness Challenge State ---
+  const videoRef = useRef(null);
+  const [challengeStep, setChallengeStep] = useState(0);
+  const [challengeDir, setChallengeDir] = useState([]); // Array of directions like ['LEFT', 'RIGHT', 'UP']
+  const [challengeStatus, setChallengeStatus] = useState('idle'); // idle, scanning, complete
+
   // --- DATA FETCHING ---
   const refreshData = async () => {
     if (!user) return;
