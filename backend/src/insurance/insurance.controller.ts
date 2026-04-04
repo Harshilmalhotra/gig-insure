@@ -54,4 +54,16 @@ export class InsuranceController {
   }) {
     return this.insurance.processWorkerHeartbeat(data.userId, data);
   }
+
+  @Post('claims/:id/evidence')
+  async submitProof(@Param('id') id: string, @Body() data: { evidenceUrl: string }) {
+    console.log(`[WORKER] Evidence submitted for claim ${id}`);
+    return this.prisma.claim.update({
+      where: { id },
+      data: {
+        evidenceUrl: data.evidenceUrl,
+        status: 'PENDING_REVIEW'
+      }
+    });
+  }
 }

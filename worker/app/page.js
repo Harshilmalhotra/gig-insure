@@ -61,6 +61,7 @@ export default function WorkerApp() {
   const [activeDisruption, setActiveDisruption] = useState(null);
   const [claimFlowStep, setClaimFlowStep] = useState(null); // null, 'triggered', 'analyzing', 'verifying', 'settled'
   const [showFraudDemo, setShowFraudDemo] = useState(false);
+  const [uploadingClaim, setUploadingClaim] = useState(null);
 
   // --- DATA FETCHING ---
   const refreshData = async () => {
@@ -509,20 +510,43 @@ export default function WorkerApp() {
                   <h2 className="text-3xl font-black text-white italic uppercase">Ledger.</h2>
                   <div className="space-y-4">
                     {user.claims?.length > 0 ? user.claims.map(claim => (
-                      <button 
-                        key={claim.id} 
-                        onClick={() => setSelectedClaim(claim)}
-                        className="w-full glass p-6 rounded-4xl flex justify-between items-center group active:scale-[0.98] transition-all"
-                      >
-                        <div className="space-y-1">
-                          <p className="text-[10px] font-black text-blue-500 uppercase">{claim.triggerType}</p>
-                          <p className="text-xs font-bold text-zinc-400">{new Date(claim.createdAt).toLocaleDateString()}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-xl font-black italic text-white">₹{claim.payoutAmount}</p>
-                          <p className={`text-[8px] font-black uppercase ${claim.status === 'PAID' ? 'text-emerald-500' : 'text-amber-500'}`}>{claim.status === 'PAID' ? 'Settled ✅' : 'Reviewing ⏳'}</p>
-                        </div>
-                      </button>
+                      <div key={claim.id} className="space-y-2">
+                        <button 
+                          onClick={() => setSelectedClaim(claim)}
+                          className={`w-full glass p-6 rounded-4xl flex justify-between items-center group active:scale-[0.98] transition-all ${claim.status === 'FLAGGED' ? 'border-red-500/50 bg-red-500/5' : ''}`}
+                        >
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <p className={`text-[10px] font-black uppercase ${claim.status === 'FLAGGED' ? 'text-red-500' : 'text-blue-500'}`}>{claim.triggerType}</p>
+                              {claim.status === 'FLAGGED' && <AlertCircle className="w-3 h-3 text-red-500 animate-pulse" />}
+                            </div>
+                            <p className="text-xs font-bold text-zinc-400">{new Date(claim.createdAt).toLocaleDateString()}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-xl font-black italic text-white">₹{claim.payoutAmount}</p>
+                            <p className={`text-[8px] font-black uppercase ${
+                              claim.status === 'PAID' ? 'text-emerald-500' : 
+                              claim.status === 'FLAGGED' ? 'text-red-500' : 
+                              claim.status === 'PENDING_REVIEW' ? 'text-blue-400' : 'text-amber-500'
+                            }`}>
+                              {claim.status === 'PAID' ? 'Settled ✅' : 
+                               claim.status === 'FLAGGED' ? 'Action Required ⚠️' : 
+                               claim.status === 'PENDING_REVIEW' ? 'Reviewing ⏳' : 'Reviewing ⏳'}
+                            </p>
+                          </div>
+                        </button>
+                        {claim.status === 'FLAGGED' && (
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setUploadingClaim(claim);
+                            }}
+                            className="w-full py-3 bg-red-500 text-white text-[10px] font-black uppercase rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-red-500/20"
+                          >
+                            <Smartphone className="w-3 h-3" /> Record Video Proof
+                          </button>
+                        )}
+                      </div>
                     )) : (
                       <div className="p-20 text-center text-zinc-800 italic">No automated claims processed yet.</div>
                     )}
@@ -665,6 +689,46 @@ export default function WorkerApp() {
 
       {/* --- MODAL OVERLAYS --- */}
       <AnimatePresence>
+         {/* Video Proof Upload Modal */}
+         {uploadingClaim && (
+           <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} className="fixed inset-0 z-[500] bg-black p-8 flex flex-col gap-8">
+              <div className="flex justify-between items-center mt-8">
+                 <h2 className="text-3xl font-black italic uppercase text-white">Record Proof.</h2>
+                 <button onClick={() => setUploadingClaim(null)} className="p-3 bg-zinc-900 rounded-2xl"><ChevronLeft className="w-5 h-5 text-zinc-400" /></button>
+              </div>
+ 
+              <div className="flex-1 bg-zinc-900 rounded-[3rem] border-2 border-white/5 overflow-hidden relative flex flex-col items-center justify-center gap-6">
+                 <div className="absolute top-6 left-6 flex items-center gap-2">
+                    <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                    <span className="text-[10px] font-black uppercase text-white/50 tracking-widest">Live Preview</span>
+                 </div>
+                 
+                 <div className="w-24 h-24 border-4 border-white/10 rounded-full flex items-center justify-center">
+                    <Smartphone className="w-10 h-10 text-white/20" />
+                 </div>
+                 <p className="text-center text-xs font-bold text-zinc-500 px-12 uppercase leading-relaxed">
+                    Please record a 10s video of your current location to verify active work integrity.
+                 </p>
+              </div>
+ 
+              <button 
+                onClick={async () => {
+                  try {
+                    // Simulate processing
+                    await axios.post(`${API_BASE}/insurance/claims/${uploadingClaim.id}/evidence`, { 
+                       evidenceUrl: "https:// RozgaarRaksha.network/evidence/mock-video-v1.mp4" 
+                    });
+                    refreshData();
+                    setUploadingClaim(null);
+                    addLog("Evidence Sent: Reviewing", "info");
+                  } catch (e) { alert("Upload failed"); }
+                }}
+                className="w-full py-6 bg-white text-black font-black uppercase italic text-lg rounded-[2rem] shadow-2xl active:scale-[0.98] transition-all"
+              >
+                Submit Evidence
+              </button>
+           </motion.div>
+         )}
          {/* Claim Detail Modal */}
          {selectedClaim && (
            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 z-200 bg-black/98 backdrop-blur-2xl p-8 flex items-center justify-center">

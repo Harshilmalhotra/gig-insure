@@ -31,21 +31,37 @@ import { API_BASE } from "../../config";
 export default function FraudIntelligence() {
   const [fraudStats, setFraudStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [selectedReview, setSelectedReview] = useState(null);
+  const [resolving, setResolving] = useState(false);
+
+  const fetchData = async () => {
+    try {
+      const res = await axios.get(`${API_BASE}/fraud/stats`);
+      setFraudStats(res.data);
+      setLoading(false);
+    } catch (err) {
+      console.error("Fetch failed", err);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await axios.get(`${API_BASE}/fraud/stats`);
-        setFraudStats(res.data);
-        setLoading(false);
-      } catch (err) {
-        console.error("Fetch failed", err);
-      }
-    };
     fetchData();
     const interval = setInterval(fetchData, 5000);
     return () => clearInterval(interval);
   }, []);
+
+  const handleResolve = async (id, status, notes) => {
+    setResolving(true);
+    try {
+      await axios.post(`${API_BASE}/admin/claims/${id}/resolve`, { status, notes });
+      await fetchData();
+      setSelectedReview(null);
+    } catch (e) {
+      alert("Resolution failed");
+    } finally {
+      setResolving(false);
+    }
+  };
 
   if (loading) return (
     <div className="flex h-full items-center justify-center">
@@ -67,6 +83,72 @@ export default function FraudIntelligence() {
         </h1>
         <p className="text-slate-500 mt-1">PoWI-based anomaly detection & network clusters</p>
       </header>
+
+      {/* REVIEW MODAL */}
+      {selectedReview && (
+        <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-6">
+           <div className="bg-[#111] border border-white/10 w-full max-w-2xl rounded-[2.5rem] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+              <div className="p-8 border-b border-white/5 flex justify-between items-center bg-white/5">
+                 <div>
+                    <h3 className="text-xl font-black text-white uppercase italic">Forensic Review</h3>
+                    <p className="text-[10px] font-black text-rose-500 uppercase">Claim ID: {selectedReview.id.slice(0,8)}</p>
+                 </div>
+                 <button onClick={() => setSelectedReview(null)} className="p-3 bg-zinc-900 rounded-2xl hover:bg-zinc-800 text-zinc-500 transition-colors">Close</button>
+              </div>
+              
+              <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+                 <div className="space-y-6">
+                    <div className="aspect-video bg-black rounded-3xl border border-white/5 flex flex-col items-center justify-center gap-4 relative group cursor-pointer overflow-hidden">
+                       <div className="absolute inset-0 bg-rose-500/10 opacity-50" />
+                       <Share2 className="text-white/20 w-12 h-12 relative z-10" />
+                       <p className="text-[10px] font-black text-white/40 uppercase relative z-10 tracking-widest">Evidence Video</p>
+                       <div className="absolute bottom-4 left-4 right-4 h-1 bg-white/10 rounded-full overflow-hidden">
+                          <div className="h-full bg-rose-500 w-[40%]" />
+                       </div>
+                    </div>
+                    <div className="p-4 bg-white/5 rounded-2xl border border-white/5 space-y-1">
+                       <p className="text-[8px] font-black text-slate-500 uppercase">System Flag</p>
+                       <p className="text-xs font-bold text-rose-400 italic">"GPS Coordinates displaced +0.4km without IMU motion sync"</p>
+                    </div>
+                 </div>
+
+                 <div className="space-y-6">
+                    <div className="space-y-4">
+                       <div className="flex justify-between items-center">
+                          <span className="text-[10px] font-black text-slate-500 uppercase">Worker</span>
+                          <span className="text-xs font-bold text-white">{selectedReview.user.name}</span>
+                       </div>
+                       <div className="flex justify-between items-center">
+                          <span className="text-[10px] font-black text-slate-500 uppercase">Platform</span>
+                          <span className="text-xs font-bold text-blue-500 uppercase tracking-tighter">{selectedReview.user.platform}</span>
+                       </div>
+                       <div className="flex justify-between items-center">
+                          <span className="text-[10px] font-black text-slate-500 uppercase">Fraud Score</span>
+                          <span className="text-xs font-black text-rose-500">{(selectedReview.fraudScore * 100).toFixed(0)}%</span>
+                       </div>
+                    </div>
+
+                    <div className="pt-6 border-t border-white/5 space-y-3">
+                       <button 
+                        disabled={resolving}
+                        onClick={() => handleResolve(selectedReview.id, 'PAID', 'Review confirmed authentic behavior.')}
+                        className="w-full py-4 bg-emerald-500 text-black font-black uppercase text-xs rounded-xl shadow-lg shadow-emerald-500/20 active:scale-95 transition-all disabled:opacity-50"
+                       >
+                         Approve Payout (₹{selectedReview.payoutAmount})
+                       </button>
+                       <button 
+                        disabled={resolving}
+                        onClick={() => handleResolve(selectedReview.id, 'REJECTED', 'Fraud detected. Profile flagged.')}
+                        className="w-full py-4 bg-rose-500 text-white font-black uppercase text-xs rounded-xl shadow-lg shadow-rose-500/20 active:scale-95 transition-all disabled:opacity-50"
+                       >
+                         Deny Claim
+                       </button>
+                    </div>
+                 </div>
+              </div>
+           </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 bg-[#111] p-8 rounded-3xl border border-white/5">
@@ -159,7 +241,7 @@ export default function FraudIntelligence() {
             <tr>
               <th className="px-8 py-4">User</th>
               <th className="px-8 py-4">Anomaly Signal</th>
-              <th className="px-8 py-4">Risk Score</th>
+              <th className="px-8 py-4">Status</th>
               <th className="px-8 py-4 text-right">Action</th>
             </tr>
           </thead>
@@ -176,12 +258,32 @@ export default function FraudIntelligence() {
                   </span>
                 </td>
                 <td className="px-8 py-4">
-                   <div className="w-32 h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                      <div className="h-full bg-rose-500" style={{width: `${claim.fraudScore * 100}%`}} />
-                   </div>
+                  <div className="flex items-center gap-2">
+                     <div className={`w-1.5 h-1.5 rounded-full ${
+                        claim.status === 'PAID' ? 'bg-emerald-500' :
+                        claim.status === 'FLAGGED' ? 'bg-rose-500 animate-pulse' :
+                        claim.status === 'PENDING_REVIEW' ? 'bg-blue-500 animate-bounce' : 'bg-zinc-500'
+                     }`} />
+                     <span className={`text-[10px] font-black uppercase ${
+                        claim.status === 'PAID' ? 'text-emerald-500' :
+                        claim.status === 'FLAGGED' ? 'text-rose-500' :
+                        claim.status === 'PENDING_REVIEW' ? 'text-blue-500' : 'text-zinc-500'
+                     }`}>
+                        {claim.status}
+                     </span>
+                  </div>
                 </td>
                 <td className="px-8 py-4 text-right">
-                   <button className="text-[10px] font-black text-blue-400 hover:text-blue-300 uppercase underline underline-offset-4 decoration-2">Inspect Deep</button>
+                   {(claim.status === 'FLAGGED' || claim.status === 'PENDING_REVIEW') ? (
+                     <button 
+                      onClick={() => setSelectedReview(claim)}
+                      className="px-4 py-1.5 bg-blue-500 text-black text-[10px] font-black rounded-lg uppercase hover:bg-blue-400 transition-colors"
+                     >
+                        Review Proof
+                     </button>
+                   ) : (
+                     <span className="text-[10px] font-black text-zinc-600 uppercase italic">Resolved</span>
+                   )}
                 </td>
               </tr>
             ))}

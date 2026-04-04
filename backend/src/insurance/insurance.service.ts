@@ -111,7 +111,7 @@ export class InsuranceService {
       let trigger: string | null = null;
 
       // 1. Environmental Triggers
-      if (weatherData.rain > 20) trigger = 'RAIN'; 
+      if (weatherData.rain > 5) trigger = 'RAIN'; 
       else if (weatherData.temp > 43) trigger = 'HEAT';
       else if (weatherData.platformStatus === 'outage') trigger = 'PLATFORM_OUTAGE';
       
@@ -131,7 +131,7 @@ export class InsuranceService {
 
       if (trigger) {
         const recentClaim = await this.prisma.claim.findFirst({
-          where: { userId, policyId: activePolicy.id, triggerType: trigger, createdAt: { gt: new Date(Date.now() - 1800000) } }, // 30min cooldown
+          where: { userId, policyId: activePolicy.id, triggerType: trigger, createdAt: { gt: new Date(Date.now() - 60000) } }, // 1min cooldown for demo
         });
 
         if (!recentClaim) {
@@ -139,7 +139,8 @@ export class InsuranceService {
           const fraudScore = effectiveTelemetry.gpsPattern === 'anomaly' ? 0.9 : 0.1;
 
           const payout = activePolicy.coverage * activityScore * (1 - fraudScore);
-          
+          const isFlagged = fraudScore > 0.5;
+
           await this.prisma.claim.create({
             data: {
               userId,
@@ -148,20 +149,25 @@ export class InsuranceService {
               payoutAmount: payout,
               activityScore,
               fraudScore,
-              status: 'PAID', // Auto-pay in real-world demo
+              status: isFlagged ? 'FLAGGED' : 'PAID', 
             },
           });
+          
           return { 
             activeTrigger: trigger, 
-            payoutProcessed: true, 
+            payoutProcessed: !isFlagged,
+            isFlagged: isFlagged,
             payoutAmount: Math.round(payout),
             weather,
             isOverridden,
             disruptionDetails: {
               event: trigger,
               zoneImpact: trigger === 'RAIN' ? '-65%' : '-40%',
-              estimatedLoss: Math.round(payout * 1.2),
-              reason: trigger === 'RAIN' ? 'Heavy precipitation detected in zone.' : 'Reduced demand / System latency.'
+              estimatedLoss: Math.round(payout * 1.5),
+              requiresProof: isFlagged,
+              reason: isFlagged 
+                ? 'Integrity anomaly detected. Video proof required for payout.' 
+                : (trigger === 'RAIN' ? 'Heavy precipitation detected in zone.' : 'Reduced demand / System latency.')
             }
           };
         }

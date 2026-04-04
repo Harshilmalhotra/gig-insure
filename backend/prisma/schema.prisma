@@ -78,6 +78,8 @@ model Claim {
   payoutAmount      Float
   fraudScore        Float
   activityScore     Float
-  status            String    @default("PENDING") // PENDING, PAID, REJECTED
+  status            String    @default("PENDING") // FLAGGED, PENDING_REVIEW, PAID, REJECTED
+  evidenceUrl       String?   // New: Video/Image proof
+  adminNotes        String?   // New: Human review response
   createdAt         DateTime  @default(now())
 }

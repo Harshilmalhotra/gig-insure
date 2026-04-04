@@ -271,4 +271,16 @@ export class AdminController {
       timestamp: new Date(),
     };
   }
+
+  @Post('claims/:id/resolve')
+  async resolveClaim(@Param('id') id: string, @Body() data: { status: string, notes: string }) {
+    console.log(`[ADMIN] Resolving claim ${id} to ${data.status}`);
+    return this.prisma.claim.update({
+      where: { id },
+      data: {
+        status: data.status,
+        adminNotes: data.notes
+      }
+    });
+  }
 }
