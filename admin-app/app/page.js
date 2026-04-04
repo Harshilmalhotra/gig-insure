@@ -34,6 +34,7 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("analytics");
   const [metrics, setMetrics] = useState(null);
   const [claims, setClaims] = useState([]);
+  const [workers, setWorkers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [envParams, setEnvParams] = useState({
     rain: 0,
@@ -51,12 +52,14 @@ export default function AdminDashboard() {
 
   const fetchData = async () => {
     try {
-      const [mRes, cRes] = await Promise.all([
+      const [mRes, cRes, uRes] = await Promise.all([
         axios.get(`${API_BASE}/metrics`),
-        axios.get(`${API_BASE}/claims`)
+        axios.get(`${API_BASE}/claims`),
+        axios.get(`${API_BASE}/users`)
       ]);
       setMetrics(mRes.data);
       setClaims(cRes.data);
+      setWorkers(uRes.data);
       setLoading(false);
     } catch (err) {
       console.error("Fetch failed", err);
@@ -106,7 +109,7 @@ export default function AdminDashboard() {
         </div>
         
         <div className="flex bg-[#121212] rounded-xl p-1 border border-white/5">
-          {["analytics", "simulation", "claims"].map(tab => (
+          {["analytics", "simulation", "claims", "workers"].map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -292,6 +295,65 @@ export default function AdminDashboard() {
                   {claims.length === 0 && (
                     <tr>
                       <td colSpan="6" className="px-6 py-20 text-center text-slate-600 italic">No claims generated yet. Start a simulation!</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+           </div>
+        </div>
+      )}
+
+      {/* Workers Tab */}
+      {activeTab === "workers" && (
+        <div className="animate-in fade-in duration-500">
+           <div className="bg-[#121212] border border-white/5 rounded-3xl overflow-hidden shadow-2xl">
+              <table className="w-full text-left">
+                <thead className="bg-[#1a1a1a] text-slate-500 text-xs uppercase font-black">
+                  <tr>
+                    <th className="px-6 py-4">Driver</th>
+                    <th className="px-6 py-4">Platform</th>
+                    <th className="px-6 py-4">Last Heartbeat</th>
+                    <th className="px-6 py-4">Live State</th>
+                    <th className="px-6 py-4">Active Policy</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {workers.map(worker => {
+                    const lastHeartbeat = worker.workerStates?.[0];
+                    return (
+                      <tr key={worker.id} className="hover:bg-white/5 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="font-bold text-white">{worker.name}</div>
+                          <div className="text-[10px] text-slate-500">{worker.email}</div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-xs font-black text-blue-500 uppercase">{worker.platform}</span>
+                        </td>
+                        <td className="px-6 py-4 text-xs font-mono text-slate-500">
+                          {lastHeartbeat ? new Date(lastHeartbeat.timestamp).toLocaleTimeString() : "Never"}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-2">
+                              {lastHeartbeat?.motion === 'moving' ? <Activity className="w-3 h-3 text-emerald-500" /> : <Clock className="w-3 h-3 text-slate-500" />}
+                              <span className="text-[11px] font-bold uppercase">{lastHeartbeat?.motion || "Unknown"}</span>
+                            </div>
+                            <div className="text-[9px] text-slate-500 uppercase font-black">Orders: {lastHeartbeat?.ordersPerHour || 0} / hr</div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          {worker.policies?.length > 0 ? (
+                            <span className="px-2 py-1 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded text-[10px] font-black">PROTECTED</span>
+                          ) : (
+                            <span className="px-2 py-1 bg-red-500/10 text-red-500 border border-red-500/20 rounded text-[10px] font-black">UNGUARDED</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {workers.length === 0 && (
+                    <tr>
+                      <td colSpan="5" className="px-6 py-20 text-center text-slate-600 italic">No workers registered yet.</td>
                     </tr>
                   )}
                 </tbody>

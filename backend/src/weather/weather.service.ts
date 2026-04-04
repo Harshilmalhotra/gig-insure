@@ -4,71 +4,51 @@ import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class WeatherService {
-  private readonly apiKey = process.env.OPENWEATHER_API_KEY || 'MOCK_KEY';
-
   constructor(private prisma: PrismaService) {}
 
+  /**
+   * Fetches real-time weather using Open-Meteo (Free, No API Key required)
+   * Fallback to simulation if global override is set in DB.
+   */
   async getCurrentWeather(lat: number = 19.076, lon: number = 72.877) {
-    // Check for the most recent environment setting
+    // 1. Check for Simulation Overrides first
     const latestState = await this.prisma.environmentState.findFirst({
       orderBy: { timestamp: 'desc' },
     });
 
-    // If the latest state is specifically marked as NOT simulated, try real API
-    if (latestState && !latestState.isSimulated) {
-      try {
-        const response = await axios.get(
-          `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${this.apiKey}&units=metric`,
-        );
-        const data = response.data;
-        return {
-          rain: data.rain ? data.rain['1h'] || 0 : 0,
-          temp: data.main.temp,
-          aqi: 50,
-          isSimulated: false,
-        };
-      } catch (e) {
-        // Fallback to the last saved weather if API fails
-        return {
-          rain: latestState.rain,
-          temp: latestState.temperature,
-          aqi: latestState.aqi,
-          isSimulated: true,
-          error: 'API_FAILED_FALLBACK',
-        };
-      }
-    }
-
-    // Default to the latest simulated state if it exists
-    if (latestState) {
+    if (latestState && latestState.isSimulated) {
       return {
         rain: latestState.rain,
         temp: latestState.temperature,
         aqi: latestState.aqi,
+        platformStatus: latestState.platformStatus,
         isSimulated: true,
       };
     }
 
-    // Attempt real API call if no simulation or if explicit override
+    // 2. Fetch Live Weather from Open-Meteo
     try {
-      const response = await axios.get(
-        `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${this.apiKey}&units=metric`,
-      );
-      const data = response.data;
+      // Open-Meteo API for current rain and temperature
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,rain&timezone=auto`;
+      const response = await axios.get(url);
+      const current = response.data.current;
+
       return {
-        rain: data.rain ? data.rain['1h'] || 0 : 0,
-        temp: data.main.temp,
-        aqi: 50, // Default for now
+        rain: current.rain || 0, // mm
+        temp: current.temperature_2m,
+        aqi: 45, // Static fallback as Open-Meteo doesn't provide AQI in free basic tier
+        platformStatus: 'online',
         isSimulated: false,
       };
     } catch (e) {
-      // Fallback to safe defaults if API fails
+      console.error('Weather API failed, using defaults:', e.message);
       return {
         rain: 0,
-        temp: 30,
+        temp: 28,
         aqi: 50,
+        platformStatus: 'online',
         isSimulated: true,
-        error: 'API_FAILED',
+        error: 'API_OFFLINE_FALLBACK',
       };
     }
   }

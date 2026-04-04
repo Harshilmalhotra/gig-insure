@@ -9,41 +9,81 @@ export class InsuranceService {
     private weather: WeatherService,
   ) {}
 
-  async calculateRisk(userId: string) {
+  /**
+   * STEP 2: RISK PROFILING
+   * Combine multi-source inputs: Environment, Behavior, and Zone.
+   */
+  async calculateRisk(userId: string, lat?: number, lon?: number) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new Error('User not found');
 
-    const weatherData = await this.weather.getCurrentWeather();
+    const weatherData = await this.weather.getCurrentWeather(lat, lon);
 
-    // Risk factors (simplified)
-    const weatherRisk = (weatherData.rain > 10 ? 0.4 : 0.1) + (weatherData.temp > 40 ? 0.3 : 0);
-    const platformRisk = user.consistencyScore < 0.7 ? 0.2 : 0;
+    // 1. weatherRisk (REAL API Data / Probability)
+    const rainProbability = weatherData.rain > 0.5 ? 0.8 : 0.2; 
+    const heatImpact = weatherData.temp > 42 ? 0.9 : 0.1;
+    const weatherRisk = Math.max(rainProbability, heatImpact);
 
-    return Math.min(weatherRisk + platformRisk, 1.0);
+    // 2. zoneDisruption (SIMULATION - from Environment State)
+    const zoneDisruption = weatherData.platformStatus === 'outage' ? 1.0 : 0.3;
+
+    // 3. behaviorRisk (MOCK PLATFORM - based on Consistency Score)
+    const behaviorVariance = 1.0 - (user.consistencyScore || 0.8);
+
+    // Combine using weighted formula:
+    // riskScore = 0.5 * weatherRisk + 0.3 * zoneDisruption + 0.2 * behaviorVariance
+    const riskScore = (0.5 * weatherRisk) + (0.3 * zoneDisruption) + (0.2 * behaviorVariance);
+
+    return {
+      riskScore: Math.min(riskScore, 1.0),
+      weatherRisk,
+      zoneDisruption,
+      behaviorVariance
+    };
   }
 
-  async quotePremium(userId: string) {
-    const riskScore = await this.calculateRisk(userId);
-    const basePremium = 20; // Base ₹20
-    const riskPremium = riskScore * 100; // Scaled by risk
+  /**
+   * STEP 3: PREMIUM CALCULATION
+   * premium = base (₹20) + (riskScore × earningsFactor) - trustDiscount
+   */
+  async quotePremium(userId: string, lat?: number, lon?: number) {
+    const { riskScore } = await this.calculateRisk(userId, lat, lon);
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    
+    if (!user) {
+      throw new Error('User profile record required for premium calculation.');
+    }
+    
+    const basePremium = 20; 
+    const earningsFactor = (user.baseEarnings || 1000) / 10; // Scaling factor based on daily earnings potential
+    const trustDiscount = (user.baseRating ?? 0) > 4.5 ? 12 : 0; // ₹12 discount for high trust
+
+    const totalPremium = basePremium + (riskScore * earningsFactor) - trustDiscount;
 
     return {
       userId,
-      basePremium,
       riskScore,
-      totalPremium: Math.ceil(basePremium + riskPremium),
+      totalPremium: Math.max(Math.ceil(totalPremium), 15), // Floor of ₹15
       currency: 'INR',
     };
   }
 
-  async processWorkerHeartbeat(userId: string, telemetry: { ordersPerHour: number; motion: string; gpsPattern: string; earnings: number }) {
+  /**
+   * STEP 4: POLICY PURCHASE
+   * Managed via InsuranceController and Prisma
+   */
+  async processWorkerHeartbeat(userId: string, telemetry: { ordersPerHour: number; motion: string; gpsPattern: string; earnings: number; lat?: number; lon?: number }) {
     // 1. Check for simulation overrides
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return { status: 'USER_NOT_FOUND' };
+
     const effectiveTelemetry = {
-      ordersPerHour: user?.forcedOrdersPerHour !== null ? user?.forcedOrdersPerHour : telemetry.ordersPerHour,
-      motion: user?.forcedMotion !== null ? user?.forcedMotion : telemetry.motion,
-      gpsPattern: user?.forcedGpsPattern !== null ? user?.forcedGpsPattern : telemetry.gpsPattern,
+      ordersPerHour: user.forcedOrdersPerHour !== null ? user.forcedOrdersPerHour : telemetry.ordersPerHour,
+      motion: user.forcedMotion !== null ? user.forcedMotion : telemetry.motion,
+      gpsPattern: user.forcedGpsPattern !== null ? user.forcedGpsPattern : telemetry.gpsPattern,
       earnings: telemetry.earnings,
+      lat: telemetry.lat,
+      lon: telemetry.lon
     };
 
     // 2. Store state
@@ -54,44 +94,50 @@ export class InsuranceService {
         motion: effectiveTelemetry.motion ?? 'idle',
         gpsPattern: effectiveTelemetry.gpsPattern ?? 'smooth',
         earnings: effectiveTelemetry.earnings ?? 0,
+        lat: effectiveTelemetry.lat,
+        lon: effectiveTelemetry.lon
       },
     });
 
-    // 3. Check for triggers
+    // 3. Heartbeat Response with Claims Check
     const activePolicy = await this.prisma.policy.findFirst({
       where: { userId, status: 'ACTIVE', endDate: { gt: new Date() } },
     });
 
     if (activePolicy) {
-      const weatherData = await this.weather.getCurrentWeather();
+      const weatherData = await this.weather.getCurrentWeather(effectiveTelemetry.lat, effectiveTelemetry.lon);
       let trigger: string | null = null;
 
-      if (weatherData.rain > 30) trigger = 'RAIN';
+      if (weatherData.rain > 20) trigger = 'RAIN'; // Updated threshold
       else if (weatherData.temp > 43) trigger = 'HEAT';
-      else if ((effectiveTelemetry.ordersPerHour ?? 0) < 0.5) trigger = 'DEMAND_CRASH';
+      else if (weatherData.platformStatus === 'outage') trigger = 'PLATFORM_OUTAGE';
 
       if (trigger) {
         const recentClaim = await this.prisma.claim.findFirst({
-          where: { userId, policyId: activePolicy.id, triggerType: trigger, createdAt: { gt: new Date(Date.now() - 3600000) } },
+          where: { userId, policyId: activePolicy.id, triggerType: trigger, createdAt: { gt: new Date(Date.now() - 1800000) } }, // 30min cooldown
         });
 
         if (!recentClaim) {
-          const activityScore = effectiveTelemetry.motion === 'moving' ? 0.9 : 0.3;
-          const fraudScore = effectiveTelemetry.gpsPattern === 'anomaly' ? 1.0 : 0.1;
+          const activityScore = effectiveTelemetry.motion === 'moving' ? 1.0 : 0.4;
+          const fraudScore = effectiveTelemetry.gpsPattern === 'anomaly' ? 0.9 : 0.1;
 
+          const payout = activePolicy.coverage * activityScore * (1 - fraudScore);
+          
           await this.prisma.claim.create({
             data: {
               userId,
               policyId: activePolicy.id,
               triggerType: trigger,
-              payoutAmount: activePolicy.coverage * activityScore * (1 - fraudScore),
+              payoutAmount: payout,
               activityScore,
               fraudScore,
-              status: 'PENDING',
+              status: 'PAID', // Auto-pay in real-world demo
             },
           });
+          return { activeTrigger: trigger, payoutProcessed: true, payoutAmount: Math.round(payout) };
         }
       }
     }
+    return { status: 'OK' };
   }
 }

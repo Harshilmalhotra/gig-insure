@@ -32,6 +32,10 @@ export class AdminController {
     return this.prisma.user.findMany({
       include: {
         policies: { where: { status: 'ACTIVE' } },
+        workerStates: {
+          orderBy: { timestamp: 'desc' },
+          take: 1,
+        },
       },
     });
   }

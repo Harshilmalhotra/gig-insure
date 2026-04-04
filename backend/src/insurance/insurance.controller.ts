@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { InsuranceService } from './insurance.service';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -10,8 +10,12 @@ export class InsuranceController {
   ) {}
 
   @Get('quote/:userId')
-  async getQuote(@Param('userId') userId: string) {
-    return this.insurance.quotePremium(userId);
+  async getQuote(
+    @Param('userId') userId: string,
+    @Query('lat') lat?: number,
+    @Query('lon') lon?: number
+  ) {
+    return this.insurance.quotePremium(userId, lat ? Number(lat) : undefined, lon ? Number(lon) : undefined);
   }
 
   @Post('policy/purchase')
@@ -39,7 +43,15 @@ export class InsuranceController {
   }
 
   @Post('worker/heartbeat')
-  async heartbeat(@Body() data: { userId: string; ordersPerHour: number; motion: string; gpsPattern: string; earnings: number }) {
+  async heartbeat(@Body() data: { 
+    userId: string; 
+    ordersPerHour: number; 
+    motion: string; 
+    gpsPattern: string; 
+    earnings: number;
+    lat?: number;
+    lon?: number;
+  }) {
     return this.insurance.processWorkerHeartbeat(data.userId, data);
   }
 }

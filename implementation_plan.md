@@ -109,8 +109,49 @@ This plan outlines the phase-wise development of the Gig-Insure hybrid parametri
 
 ---
 
+---
+
+## 📅 Phase 4: Worker Mobile App (`worker`)
+**Goal**: Create a beautiful, responsive mobile web app for gig workers.
+
+### 4.1 Onboarding & Registration
+- **Screen**: Simple, clean registration with name, email, and platform selection (Swiggy/Zomato).
+- **Functionality**: `POST /auth/register` to create a profile and fetch initial mock platform data.
+
+### 4.2 Worker Dashboard
+- **Profile Summary**: Displays avg earnings, ratings, and platform consistency.
+- **Active Policy Card**: 
+    - Shows "No Active Policy" if none exists.
+    - Shows Coverage (₹), Premium (₹), and Expiry Date if active.
+- **Insurance Quote**:
+    - "Get Protected" CTA.
+    - Fetches current premium quote based on live environment risk.
+    - Purchase flow with success animations.
+
+### 4.3 Proof of Work Simulation (DEMO TOOL)
+- **Telemetry Controls**:
+    - **Status**: Online/Offline toggle (starts/stops heartbeats).
+    - **Motion**: Moving / Idle toggle.
+    - **GPS**: Smooth / Anomaly toggle (for fraud testing).
+    - **Orders/hr**: Slider to adjust simulated productivity.
+- **Heartbeat Loop**: Sends `POST /insurance/worker/heartbeat` every 10 seconds while Online.
+
+### 4.4 Real-time Trigger & Claim Status
+- **Claim Alerts**: Shows active triggers (e.g., "⚠️ HEAVY RAIN DETECTED").
+- **Payout Notification**: Confirms when a claim has been automatically processed and paid out.
+
+### 🖌️ Design Aesthetics (Worker App)
+- **Theme**: Light/Dark mode compatible, default to Sleek Dark.
+- **Mobile-First**: Optimized for small screens (390px - 450px).
+- **Colors**: 
+    - **Brand**: Neon Cerulean (Trust + Tech).
+    - **Success**: Emerald Green.
+    - **Warning**: Amber Glow.
+- **UX**: Glassmorphic cards, smooth spring animations, and haptic-feedback-like visual cues.
+
+---
+
 ## 🚀 Next Steps
-1. Initialize `backend` with Express and Prisma.
-2. Define the schema in `schema.prisma`.
-3. Implement the Mock Platform and Weather Service.
-4. Build the core Engine logic.
+1. Implement Phase 4 in `worker` directory.
+2. Ensure API connectivity with `backend`.
+3. Standardize layouts for mobile responsiveness.
