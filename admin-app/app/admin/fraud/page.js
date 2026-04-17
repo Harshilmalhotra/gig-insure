@@ -34,6 +34,16 @@ export default function FraudIntelligence() {
   const [selectedReview, setSelectedReview] = useState(null);
   const [resolving, setResolving] = useState(false);
 
+  const getAIMeta = (claim) => {
+    try {
+      if (!claim?.adminNotes) return null;
+      const parsed = JSON.parse(claim.adminNotes);
+      return parsed?.aiDecisionMeta || null;
+    } catch {
+      return null;
+    }
+  };
+
   const fetchData = async () => {
     try {
       const res = await axios.get(`${API_BASE}/fraud/stats`);
@@ -139,7 +149,40 @@ export default function FraudIntelligence() {
                           <span className="text-[10px] font-black text-slate-500 uppercase">Fraud Score</span>
                           <span className="text-xs font-black text-rose-500">{(selectedReview.fraudScore * 100).toFixed(0)}%</span>
                        </div>
+                       {(() => {
+                        const meta = getAIMeta(selectedReview);
+                        if (!meta) return null;
+                        return (
+                          <>
+                            <div className="flex justify-between items-center">
+                               <span className="text-[10px] font-black text-slate-500 uppercase">Anomaly Score</span>
+                               <span className={`text-xs font-black ${meta.anomalyScore > 0.65 ? 'text-rose-500' : 'text-emerald-500'}`}>{(meta.anomalyScore * 100).toFixed(0)}%</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                               <span className="text-[10px] font-black text-slate-500 uppercase">GPS Variance Z</span>
+                               <span className={`text-xs font-black ${Math.abs(meta.gpsVarianceZScore) > 2 ? 'text-rose-500' : 'text-blue-400'}`}>{meta.gpsVarianceZScore?.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                               <span className="text-[10px] font-black text-slate-500 uppercase">Trust Graph</span>
+                               <span className={`text-xs font-black ${meta?.trustGraph?.ringDetected ? 'text-rose-500' : 'text-emerald-500'}`}>
+                                 {meta?.trustGraph?.ringDetected ? `Cluster Flag (${meta.trustGraph.nearbyDistinctUsers})` : 'Clear'}
+                               </span>
+                            </div>
+                          </>
+                        );
+                       })()}
                     </div>
+
+                    {(() => {
+                      const meta = getAIMeta(selectedReview);
+                      if (!meta?.dynamicMessage) return null;
+                      return (
+                        <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-2xl">
+                          <p className="text-[8px] font-black text-blue-400 uppercase mb-1">AI Agent Summary</p>
+                          <p className="text-[10px] font-bold text-zinc-200 leading-relaxed">{meta.dynamicMessage}</p>
+                        </div>
+                      );
+                    })()}
 
                     <div className="pt-6 border-t border-white/5 space-y-3">
                        <button 
@@ -266,9 +309,17 @@ export default function FraudIntelligence() {
                   <div className="text-[10px] text-zinc-500 uppercase font-black">{claim.user.phone}</div>
                 </td>
                 <td className="px-8 py-4">
-                  <span className="text-[10px] font-bold text-rose-400 bg-rose-500/5 px-2 py-1 rounded border border-rose-500/20 italic">
-                    {claim.fraudScore > 0.8 ? 'GPS Teleport detected' : 'Motion mismatch sensors'}
-                  </span>
+                  {(() => {
+                    const meta = getAIMeta(claim);
+                    const badgeText = meta?.trustGraph?.ringDetected
+                      ? `Trust cluster flag (${meta.trustGraph.nearbyDistinctUsers})`
+                      : (claim.fraudScore > 0.8 ? 'GPS Teleport detected' : 'Motion mismatch sensors');
+                    return (
+                      <span className="text-[10px] font-bold text-rose-400 bg-rose-500/5 px-2 py-1 rounded border border-rose-500/20 italic">
+                        {badgeText}
+                      </span>
+                    );
+                  })()}
                 </td>
                 <td className="px-8 py-4">
                   <div className="flex items-center gap-2">

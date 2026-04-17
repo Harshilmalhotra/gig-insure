@@ -155,3 +155,34 @@ This plan outlines the phase-wise development of the Rozgaar Raksha hybrid param
 1. Implement Phase 4 in `worker` directory.
 2. Ensure API connectivity with `backend`.
 3. Standardize layouts for mobile responsiveness.
+
+---
+
+## 📅 Phase 5: Credibility, Explainability & Inclusion (Feedback Closure)
+**Goal**: Address jury feedback with production-feasible improvements.
+
+### 5.1 Truthful Intelligence Positioning
+- Update all pitch/docs copy to: **Hybrid Rules + Risk Intelligence** (not full ML automation yet).
+- Clearly document current deterministic logic and ML-ready evolution path.
+
+### 5.2 Hybrid Claim Decisioning
+- Keep deterministic PoWI checks as payout safety baseline.
+- Add model-risk proxy score from historical worker-state features.
+- Use confidence bands:
+    - **LOW** → auto-settle
+    - **MEDIUM** → request lightweight evidence
+    - **HIGH** → manual review
+
+### 5.3 Explainability API + UI
+- Add claim explanation endpoint for worker/admin transparency.
+- Return reason codes, decision band, and worker-facing explanation text.
+
+### 5.4 Inclusive UX Upgrades (Target User Fit)
+- Add bilingual messaging support (English + Hindi) for claim decisions.
+- Provide low-friction evidence collection for medium-risk cases.
+- Prioritize readable decision language for low-literacy contexts.
+
+### 5.5 Long-Term AI Feasibility Plan
+- **Stage A (Shadow Mode):** collect model outputs without affecting settlement.
+- **Stage B (Assisted Mode):** model influences only risk routing.
+- **Stage C (Adaptive Mode):** scheduled retraining + drift/fairness checks.

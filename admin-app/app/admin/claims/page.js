@@ -25,6 +25,16 @@ export default function ClaimsEngine() {
   const [selectedClaim, setSelectedClaim] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const getAIMeta = (claim) => {
+    try {
+      if (!claim?.adminNotes) return null;
+      const parsed = JSON.parse(claim.adminNotes);
+      return parsed?.aiDecisionMeta || null;
+    } catch {
+      return null;
+    }
+  };
+
   useEffect(() => {
     const fetchClaims = async () => {
       try {
@@ -145,6 +155,22 @@ export default function ClaimsEngine() {
                 <h4 className="text-[11px] font-black uppercase text-amber-400 flex items-center gap-2">
                   <ShieldCheck size={14}/> PoWI Intelligence
                 </h4>
+                {(() => {
+                  const meta = getAIMeta(selectedClaim);
+                  if (!meta) return null;
+                  return (
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex justify-between p-3 bg-black/40 rounded-xl border border-white/5">
+                        <span className="text-[10px] font-black text-slate-500 uppercase">Anomaly Score</span>
+                        <span className={`text-[10px] font-black ${meta.anomalyScore > 0.65 ? "text-rose-500" : "text-emerald-500"}`}>{(meta.anomalyScore * 100).toFixed(0)}%</span>
+                      </div>
+                      <div className="flex justify-between p-3 bg-black/40 rounded-xl border border-white/5">
+                        <span className="text-[10px] font-black text-slate-500 uppercase">GPS Variance Z</span>
+                        <span className={`text-[10px] font-black ${Math.abs(meta.gpsVarianceZScore) > 2 ? "text-rose-500" : "text-blue-400"}`}>{meta.gpsVarianceZScore?.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  );
+                })()}
                 <div className="space-y-3">
                   <div className="flex justify-between p-3 bg-black/40 rounded-xl border border-white/5">
                     <span className="text-[10px] font-black text-slate-500 uppercase">Activity Score</span>
@@ -158,11 +184,34 @@ export default function ClaimsEngine() {
                       {(selectedClaim.fraudScore * 100).toFixed(0)}% RISK
                     </span>
                   </div>
+                  {(() => {
+                    const meta = getAIMeta(selectedClaim);
+                    if (!meta?.trustGraph) return null;
+                    return (
+                      <div className="flex justify-between p-3 bg-black/40 rounded-xl border border-white/5">
+                        <span className="text-[10px] font-black text-slate-500 uppercase">Trust Graph</span>
+                        <span className={`text-[10px] font-black ${meta.trustGraph.ringDetected ? "text-rose-500" : "text-emerald-500"}`}>
+                          {meta.trustGraph.ringDetected ? `CLUSTER FLAG (${meta.trustGraph.nearbyDistinctUsers})` : 'CLEAR'}
+                        </span>
+                      </div>
+                    );
+                  })()}
                 </div>
                 <p className="text-[10px] text-slate-600 italic leading-relaxed">
                   Decentralized sensors confirmed motion at {new Date(selectedClaim.createdAt).toLocaleTimeString()} with smooth GPS telemetry.
                 </p>
               </section>
+
+              {(() => {
+                const meta = getAIMeta(selectedClaim);
+                if (!meta?.dynamicMessage) return null;
+                return (
+                  <section className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-2xl">
+                    <h4 className="text-[10px] font-black uppercase text-blue-400 mb-2">AI Agent Summary</h4>
+                    <p className="text-[10px] font-bold text-slate-200 leading-relaxed">{meta.dynamicMessage}</p>
+                  </section>
+                );
+              })()}
 
               {/* Verdict */}
               <section className="p-4 bg-white/5 border border-white/10 rounded-2xl">

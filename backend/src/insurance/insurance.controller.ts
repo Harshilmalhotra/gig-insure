@@ -54,8 +54,47 @@ export class InsuranceController {
     earnings: number;
     lat?: number;
     lon?: number;
+    language?: 'en' | 'hi';
   }) {
     return this.insurance.processWorkerHeartbeat(data.userId, data);
+  }
+
+  @Get('claims/:id/explanation')
+  async getClaimExplanation(@Param('id') id: string, @Query('lang') lang?: 'en' | 'hi') {
+    const claim = await this.prisma.claim.findUnique({
+      where: { id },
+      include: {
+        user: true,
+        policy: true,
+      },
+    });
+
+    if (!claim) {
+      return { status: 'NOT_FOUND' };
+    }
+
+    const summary = this.insurance.getClaimDecisionSummary(
+      {
+        triggerType: claim.triggerType,
+        fraudScore: claim.fraudScore,
+        activityScore: claim.activityScore,
+      },
+      lang || 'en',
+    );
+
+    return {
+      claimId: claim.id,
+      status: claim.status,
+      triggerType: claim.triggerType,
+      payoutAmount: claim.payoutAmount,
+      activityScore: claim.activityScore,
+      fraudScore: claim.fraudScore,
+      decisionBand: summary.band,
+      explanation: summary.explanation,
+      policyCoverage: claim.policy.coverage,
+      workerName: claim.user.name,
+      language: lang || 'en',
+    };
   }
 
   @Post('claims/:id/evidence')

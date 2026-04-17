@@ -6,7 +6,7 @@
 
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Mobile%20%7C%20Web-brightgreen.svg)](#)
-[![AI Powered](https://img.shields.io/badge/AI-Powered-orange.svg)](#ai--ml-architecture)
+[![Hybrid Intelligence](https://img.shields.io/badge/Hybrid-Rules%20%2B%20Risk-orange.svg)](#ai--ml-architecture)
 [![Status](https://img.shields.io/badge/Status-In%20Development-yellow.svg)](#)
 
 *"Unlike traditional systems, we don't just verify location — we verify behavior, making GPS spoofing attacks economically unviable."*
@@ -361,45 +361,50 @@ Our claim handling pipeline balances **fraud prevention with UX fairness**:
 
 ## AI / ML Architecture
 
-Rozgaar Raksha's intelligence evolves in phases, starting practical and scaling toward full automation.
+Rozgaar Raksha uses a **hybrid decision engine** designed for long-term production reliability.
 
-### Phase 1 — MVP (Rule-Based Scoring)
+### Current Production Mode — Rules + Risk Intelligence
 
-A transparent, explainable scoring system:
+Current decisions combine deterministic rules with a model-ready risk proxy score:
 
 ```
-Fraud Score = w₁ × GPS_anomaly
-            + w₂ × Motion_anomaly
-            + w₃ × Behavior_anomaly
+Final Fraud Risk = 0.65 × Rule Risk + 0.35 × Model-Risk Proxy
 ```
 
-| Weight | Signal | Description |
+The model-risk proxy currently uses engineered features (not a black-box model), such as:
+
+- GPS anomaly signal
+- motion confidence signal
+- historical anomaly rate
+- sudden output-drop signal
+
+This keeps the system explainable while creating a direct path to trained models.
+
+### Confidence-Band Decisions
+
+| Band | Operational Action | Worker Experience |
 |:---|:---|:---|
-| `w₁` | **GPS Anomaly** | Teleportation, impossible speeds, static coordinates |
-| `w₂` | **Motion Anomaly** | No accelerometer activity during "active" work |
-| `w₃` | **Behavior Anomaly** | Zero deliveries despite being "online" for hours |
+| **LOW** | Auto-settle claim | Instant payout |
+| **MEDIUM** | Request lightweight evidence | Quick verification flow |
+| **HIGH** | Manual review queue | Human-reviewed decision |
 
-Each weight is **tunable** and region-specific.
+### Explainability by Design
 
----
+Every claim decision returns:
 
-### Phase 2 — ML-Driven Detection
+- risk band
+- reason codes
+- rule-risk component
+- model-risk component
+- worker-facing message (English/Hindi)
 
-| Technique | Purpose |
-|:---|:---|
-| **Isolation Forest** | Detects individual outliers in activity patterns |
-| **Behavioral Clustering** | Groups workers by behavior to identify norm violations |
-| **Fraud Pattern Detection** | Recognizes coordinated multi-account fraud rings |
+### Long-Term ML Evolution Path
 
----
+1. **Shadow mode:** train and score without impacting payouts.
+2. **Assisted mode:** model influences only medium/high-risk routing.
+3. **Adaptive mode:** periodic retraining with fairness and drift checks.
 
-### Continuous Learning Loop
-
-The system improves over time through:
-
-- **Trust score updates** — workers build reputation over weeks and months
-- **Adaptive thresholds** — regional and seasonal adjustments to scoring baselines
-- **Pattern evolution** — new fraud patterns are automatically incorporated into detection models
+This roadmap avoids overpromising "AI-powered" behavior while still building toward robust ML-assisted operations.
 
 ---
 

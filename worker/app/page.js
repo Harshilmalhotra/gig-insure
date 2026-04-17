@@ -59,9 +59,11 @@ export default function WorkerApp() {
   const [activeTab, setActiveTab] = useState("home");
   const [selectedClaim, setSelectedClaim] = useState(null);
   const [activeDisruption, setActiveDisruption] = useState(null);
+  const [latestDecisionMessage, setLatestDecisionMessage] = useState(null);
   const [claimFlowStep, setClaimFlowStep] = useState(null); // null, 'triggered', 'analyzing', 'verifying', 'settled'
   const [showFraudDemo, setShowFraudDemo] = useState(false);
   const [uploadingClaim, setUploadingClaim] = useState(null);
+  const [claimExplanationById, setClaimExplanationById] = useState({});
 
   // --- Liveness Challenge State ---
   const videoRef = useRef(null);
@@ -72,6 +74,16 @@ export default function WorkerApp() {
 
   const [challengeDir, setChallengeDir] = useState([]); // Array of directions like ['LEFT', 'RIGHT', 'UP']
   const [challengeStatus, setChallengeStatus] = useState('idle'); // idle, scanning, complete
+
+  const getClaimAIMeta = (claim) => {
+    try {
+      if (!claim?.adminNotes) return null;
+      const parsed = JSON.parse(claim.adminNotes);
+      return parsed?.aiDecisionMeta || null;
+    } catch {
+      return null;
+    }
+  };
 
   // --- DATA FETCHING ---
   const refreshData = async () => {
@@ -169,8 +181,11 @@ export default function WorkerApp() {
        int = setInterval(async () => {
          try {
            const res = await axios.post(`${API_BASE}/insurance/worker/heartbeat`, {
-             userId: user.id, phone: user.phone, ordersPerHour: 3.5, motion: motionState, gpsPattern: "smooth", lat: coords.lat, lon: coords.lon
+             userId: user.id, phone: user.phone, ordersPerHour: 3.5, motion: motionState, gpsPattern: "smooth", lat: coords.lat, lon: coords.lon, language: "en"
            });
+            if (res.data?.decision?.explanation?.message) {
+              setLatestDecisionMessage(res.data.decision.explanation.message);
+            }
             if (res.data.isOverridden) {
                addLog("Telemetry Shield Active: Admin Override", "info");
             }
@@ -203,6 +218,21 @@ export default function WorkerApp() {
     }
     return () => { if (int) clearInterval(int); };
   }, [flow, user, motionState, coords, permissions]);
+
+  useEffect(() => {
+    if (!selectedClaim) return;
+    const aiMeta = getClaimAIMeta(selectedClaim);
+    if (aiMeta?.dynamicMessage) return;
+    axios
+      .get(`${API_BASE}/insurance/claims/${selectedClaim.id}/explanation?lang=en`)
+      .then((res) => {
+        setClaimExplanationById((prev) => ({
+          ...prev,
+          [selectedClaim.id]: res.data?.explanation || null,
+        }));
+      })
+      .catch(() => {});
+  }, [selectedClaim]);
 
   // --- HACKATHON DEMO SHORTCUT ---
   useEffect(() => {
@@ -536,6 +566,12 @@ export default function WorkerApp() {
                           : `The environment is stable. Your policy protects you from sudden drops in order volume due to rain or demand shifts.`}
                       </p>
                     </div>
+                    {latestDecisionMessage && (
+                      <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4">
+                        <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-1">Claim Decision Summary</p>
+                        <p className="text-[10px] font-bold text-zinc-200 leading-relaxed">{latestDecisionMessage}</p>
+                      </div>
+                    )}
                   </div>
 
                   {/* 🔥 TRIGGER TIMELINE (STORYTELLING) */}
@@ -613,6 +649,16 @@ export default function WorkerApp() {
                   <div className="space-y-4">
                     {user.claims?.length > 0 ? user.claims.map(claim => (
                       <div key={claim.id} className="space-y-2">
+                        {(() => {
+                          const aiMeta = getClaimAIMeta(claim);
+                          const explanation = aiMeta?.dynamicMessage || claimExplanationById[claim.id];
+                          if (!explanation) return null;
+                          return (
+                            <div className="px-4 py-3 rounded-2xl border border-blue-500/20 bg-blue-500/5 text-[10px] font-bold text-zinc-300 leading-relaxed">
+                              {explanation}
+                            </div>
+                          );
+                        })()}
                         <button 
                           onClick={() => setSelectedClaim(claim)}
                           className={`w-full glass p-6 rounded-4xl flex justify-between items-center group active:scale-[0.98] transition-all ${claim.status === 'FLAGGED' ? 'border-red-500/50 bg-red-500/5' : ''}`}
@@ -911,6 +957,17 @@ export default function WorkerApp() {
                  </div>
 
                  <div className="space-y-6">
+                    {(() => {
+                      const aiMeta = getClaimAIMeta(selectedClaim);
+                      const dynamicExplanation = aiMeta?.dynamicMessage || claimExplanationById[selectedClaim.id];
+                      if (!dynamicExplanation) return null;
+                      return (
+                        <div className="glass p-5 rounded-3xl bg-blue-500/5 border border-blue-500/20">
+                          <p className="text-[9px] font-black text-blue-500 uppercase tracking-widest mb-2">AI Agent Summary</p>
+                          <p className="text-[10px] font-bold text-zinc-200 leading-relaxed">{dynamicExplanation}</p>
+                        </div>
+                      );
+                    })()}
                     <div className="grid grid-cols-2 gap-4">
                        <div className="p-6 bg-zinc-900 rounded-4xl border border-white/5 space-y-1">
                           <p className="text-[8px] font-black text-zinc-500 uppercase">Trigger Event</p>
@@ -961,6 +1018,8 @@ export default function WorkerApp() {
                  <div className="space-y-4 py-6 border-y border-white/5">
                     <div className="flex justify-between font-black uppercase text-[10px] text-zinc-500">Premium<span>₹{quote.totalPremium}</span></div>
                     <div className="flex justify-between font-black uppercase text-[10px] text-zinc-500">Coverage<span>₹5000</span></div>
+                    <div className="flex justify-between font-black uppercase text-[10px] text-blue-400">Risk Forecast<span>{Math.round((quote?.model?.probabilityOfDisruption || quote?.riskScore || 0) * 100)}%</span></div>
+                    <p className="text-[10px] font-bold text-zinc-400 leading-relaxed">Predicted Disruption Risk is continuously computed from weather, demand volatility, and disruption patterns.</p>
                  </div>
                  <button onClick={() => {
                    axios.post(`${API_BASE}/insurance/policy/purchase`, { userId: user.id, premium: quote.totalPremium, coverage: 5000 }).then(() => {
