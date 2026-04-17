@@ -30,6 +30,7 @@
 - [Payout Logic](#final-payout-logic)
 - [Why Rozgaar Raksha Wins](#why-rozgaar-raksha-wins)
 - [Future Scope](#future-scope)
+- [Pitch Deck](https://drive.google.com/file/d/1VIj9LkZlYygGAsar9lXxTyJAGvjQWRPc/view?usp=sharing)
 
 ---
 
