@@ -1,0 +1,54 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* { box-sizing: border-box; }
+
+html, body {
+  background: #06060f;
+  color: #e2e2f0;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: #06060f; }
+::-webkit-scrollbar-thumb { background: #1a1a2e; border-radius: 4px; }
+
+@layer components {
+  .card {
+    @apply bg-[#0c0c1a] border border-[#1a1a2e] rounded-2xl;
+  }
+  .card-accent {
+    @apply bg-[#0c0c1a] border border-[#1a1a2e] rounded-2xl;
+    background: radial-gradient(ellipse at 0% 0%, rgba(99,102,241,0.08) 0%, #0c0c1a 55%);
+  }
+  .btn-accent {
+    @apply bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-semibold rounded-xl px-5 py-2.5 transition-all duration-150 text-sm;
+  }
+  .btn-ghost {
+    @apply border border-[#1a1a2e] hover:border-indigo-500/40 text-gray-500 hover:text-white rounded-xl px-4 py-2 transition-all text-sm;
+  }
+  .badge-green {
+    @apply text-[10px] font-bold uppercase tracking-wider text-green-400 bg-green-400/10 px-2.5 py-1 rounded-full;
+  }
+  .badge-yellow {
+    @apply text-[10px] font-bold uppercase tracking-wider text-yellow-400 bg-yellow-400/10 px-2.5 py-1 rounded-full;
+  }
+  .badge-red {
+    @apply text-[10px] font-bold uppercase tracking-wider text-red-400 bg-red-400/10 px-2.5 py-1 rounded-full;
+  }
+  .badge-blue {
+    @apply text-[10px] font-bold uppercase tracking-wider text-indigo-400 bg-indigo-400/10 px-2.5 py-1 rounded-full;
+  }
+  .th {
+    @apply text-left py-3 pr-4 text-[11px] text-gray-500 uppercase tracking-wider font-semibold;
+  }
+  .td {
+    @apply py-3.5 pr-4 text-sm;
+  }
+  .table-row {
+    @apply border-b border-[#1a1a2e] hover:bg-[#11111f] transition-colors;
+  }
+}
